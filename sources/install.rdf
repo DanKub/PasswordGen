@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>password@gen.net</em:id>
+    <em:type>2</em:type>
+    <em:version>2.0</em:version>
+   <em:iconURL>chrome://passwordgen/skin/active.png</em:iconURL>
+
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>1.5</em:minVersion>
+        <em:maxVersion>46.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+
+    <em:localized>
+      <Description>
+        <em:locale>sk</em:locale>
+        <em:name>PasswordGen</em:name>
+        <em:description>
+          Generátor jednoúčelových hesiel, ktorý umožňuje na každej stránke (internetovej službe) používateľovi zadať vždy rovnakú heslovú frázu, a na základe definovaných pravidiel a nastavení pre stránku (internetovú službu) sa vygeneruje vždy iné heslo.
+        </em:description>
+        <em:creator>Daniel Kubica</em:creator>
+        <em:developer>Daniel Kubica</em:developer>
+        <em:developer>Michaela Prichocká</em:developer>
+        <em:homepageURL>https://github.com/DanKub/PasswordGen</em:homepageURL>
+      </Description>
+    </em:localized>
+
+    <em:name>PasswordGen</em:name>
+    <em:description>
+      Password generator - allows use the same password for every domain but generated password will be for every domain different.
+    </em:description>
+    <em:creator>Daniel Kubica</em:creator>
+    <em:developer>Daniel Kubica</em:developer>
+    <em:developer>Michaela Prichocká</em:developer>
+    <em:homepageURL>https://github.com/DanKub/PasswordGen</em:homepageURL>
+  </Description>
+</RDF>

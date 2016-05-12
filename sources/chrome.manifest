@@ -1,0 +1,8 @@
+content     passwordgen                     chrome/content/
+content     passwordgen                     chrome/content/ contentaccessible=yes
+locale      passwordgen     en-US           chrome/locale/en-US/
+locale      passwordgen     sk              chrome/locale/sk/
+skin        passwordgen     classic/1.0     chrome/skin/
+
+overlay chrome://browser/content/browser.xul chrome://passwordgen/content/passwordgen.xul
+style chrome://global/content/customizeToolbar.xul chrome://passwordgen/skin/passwordgen.css

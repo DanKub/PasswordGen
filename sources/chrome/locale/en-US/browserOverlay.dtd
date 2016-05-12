@@ -1,0 +1,32 @@
+<!ENTITY passwordgen.iconTipText            "Active/Passive">
+<!ENTITY passwordgen.toolLabel              "Passwordgen">
+<!ENTITY passwordgen.generate               "Generate password">
+<!ENTITY passwordgen.showSet                "Show settings">
+
+<!ENTITY settings.colname.domain            "Domain">
+<!ENTITY settings.colname.length            "Password length">
+<!ENTITY settings.colname.b64               "Base-64 encoding">
+<!ENTITY settings.colname.hex               "HEX encoding">
+<!ENTITY settings.button.del                "Delete">
+<!ENTITY settings.button.delAll             "Delete all">
+<!ENTITY settings.button.export             "Export...">
+<!ENTITY settings.button.import             "Import...">
+<!ENTITY settings.tab1                      "Settings">
+<!ENTITY settings.tab2                      "Stored settings">
+<!ENTITY settings.title1                    "Generator properties">
+<!ENTITY settings.title2                    "Storage settings">
+<!ENTITY settings.title3                    "Description">
+<!ENTITY settings.findBox                   "Find domain">
+<!ENTITY settings.lengthPass                "Password length:">
+<!ENTITY settings.const                     "Constant:">
+<!ENTITY settings.enc                       "Encoding:">
+<!ENTITY settings.passShowTime              "Password showing time:">
+<!ENTITY settings.saveSet                   "Save settings">
+<!ENTITY settings.storedSet                 "Use saved settings for password generating">
+<!ENTITY settings.descript.length           "Generated password length in range 1 to 64 characters.">
+<!ENTITY settings.descript.const            "Some string which will affect generated password.\nMaximum length of string is 100 characters.">
+<!ENTITY settings.descript.b64              "Generated password will contain\nLetters: A-Z, a-z\nNumbers: 0-9\nCharacters: +, /">
+<!ENTITY settings.descript.hex              "Generated password will contain\nSmall letters: a-f\nNumbers: 0-9">
+<!ENTITY settings.descript.passShowTime     "Time in seconds during which generated password will be shown at the bottom part of web browser window.">
+<!ENTITY settings.descript.saveSet          "Password length and encoding type settings used for password generating will be stored for any domain, in which you generate password. ">
+<!ENTITY settings.descript.storedSet        "Stored settings will be used for password generating. These settings you can edit for each domain separately through \'Stored settings\' tab.">

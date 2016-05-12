@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://passwordgen/skin/passwordgen.css" type="text/css"?>
+<!DOCTYPE window SYSTEM "chrome://passwordgen/locale/browserOverlay.dtd">
+
+<prefwindow xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        id="settingsWindow"
+        resizable="no"
+        onload="PassGen.loadSettings();"
+        width="1000"
+        height="410">
+
+  <script type="application/x-javascript"
+          src="chrome://passwordgen/content/passwordgen.js" />
+
+  <stringbundleset>
+    <stringbundle id="stringBundle" src="chrome://passwordgen/locale/passwordgen.properties"/>
+  </stringbundleset>
+
+  <prefpane flex="1">
+    <preferences>
+      <preference id="b64EncPref" name="extensions.passwordgen.b64Enc" type="bool"/>
+      <preference id="hexEncPref" name="extensions.passwordgen.hexEnc" type="bool"/>
+      <preference id="lengthPref" name="extensions.passwordgen.lengthPass" type="string"/>
+      <preference id="isActivePref" name="extensions.passwordgen.isActive" type="bool"/>
+      <preference id="passShowTimePref" name="extensions.passwordgen.passShowTime" type="string"/>
+      <preference id="storePref" name="extensions.passwordgen.store" type="bool"/>
+      <preference id="useStoredPref" name="extensions.passwordgen.useStored" type="bool"/>
+      <preference id="constPref" name="extensions.passwordgen.const" type="string"/>
+    </preferences>
+
+    <tabbox flex="1">
+      <tabs>
+        <tab label="&settings.tab1;"/>
+        <tab label="&settings.tab2;"/>
+      </tabs>
+      <tabpanels flex="1">
+
+        <!-- Settings -->
+        <tabpanel>
+          <vbox flex="1">
+            <hbox>
+              <vbox flex="1">
+                <caption style="font-size:14px; font-weight:bold;" label="&settings.title1;"/>
+                <spacer type="block" height="10"/>
+                <grid>
+                  <columns>
+                    <column/>
+                    <column/>
+                  </columns>
+                  <rows>
+                    <row align="center"
+                         onmouseover="PassGen.showDescription('&settings.descript.length;');"
+                         onmouseout="PassGen.hideDescription();">
+                      <label value="&settings.lengthPass;"/>
+                      <textbox type="number" min="1" max="64" maxlength="2" style="max-width:50px" preference="lengthPref"/>
+                    </row>
+                    <row align="center"
+                         onmouseover="PassGen.showDescription('&settings.descript.const;');"
+                         onmouseout="PassGen.hideDescription();">
+                      <label value="&settings.const;"/>
+                      <textbox maxlength="100" preference="constPref"/>
+                    </row>
+                    <row align="center">
+                      <label value="&settings.enc;"/>
+                      <radiogroup orient="horizontal" preference="b64EncPref">
+                          <radio label="Base-64" selected="true" value="true"
+                                 onmouseover="PassGen.showDescription('&settings.descript.b64;');"
+                                 onmouseout="PassGen.hideDescription();"/>
+                          <radio label="HEX" value="false"
+                                 onmouseover="PassGen.showDescription('&settings.descript.hex;');"
+                                 onmouseout="PassGen.hideDescription();"/>
+                      </radiogroup>
+                    </row>
+                    <row align="center"
+                         onmouseover="PassGen.showDescription('&settings.descript.passShowTime;');"
+                         onmouseout="PassGen.hideDescription();">
+                      <label value="&settings.passShowTime;"/>
+                      <textbox type="number" min="0" max="60" maxlength="2" style="max-width:50px" preference="passShowTimePref"/>
+                    </row>
+                  </rows>
+                </grid>
+              </vbox>
+              <spacer type="block" width="70"/>
+              <vbox flex="1">
+                <caption style="font-size:14px; font-weight:bold;" label="&settings.title2;"/>
+                <spacer type="block" height="10"/>
+                <checkbox label="&settings.saveSet;"
+                          preference="storePref"
+                          onmouseover="PassGen.showDescription('&settings.descript.saveSet;');"
+                          onmouseout="PassGen.hideDescription();"/>
+                <checkbox label="&settings.storedSet;"
+                          preference="useStoredPref"
+                          onmouseover="PassGen.showDescription('&settings.descript.storedSet;');"
+                          onmouseout="PassGen.hideDescription();"/>
+              </vbox>
+            </hbox>
+            <spacer type="block" height="15"/>
+            <caption style="font-size:14px; font-weight:bold;" label="&settings.title3;"/>
+            <box flex="1">
+              <textbox id="descriptionBox" flex="1" readonly="true" multiline="true" style="max-width:350px; max-height:100px;"/>
+            </box>
+          </vbox>
+          <box orient="horizontal" align="end">
+            <button label="&settings.button.export;" onclick="PassGen.exportFile();"/>
+            <button label="&settings.button.import;" onclick="PassGen.importFile();"/>
+          </box>
+        </tabpanel>
+
+        <!-- Stored settings -->
+        <tabpanel>
+          <vbox flex="1">
+            <tree id="myTree" width="800" rows="10" flex="1" editable="true"
+                  oninput="PassGen.savePassLength();" onclick="PassGen.saveEncoding(event);"
+                  onkeypress="PassGen.del(event);">
+              <treecols>
+                <treecol id="domainCol" label="&settings.colname.domain;" flex="1" primary="true"/>
+                <treecol id="lengthCol" label="&settings.colname.length;" flex="1"/>
+                <treecol id="b64Col" label="&settings.colname.b64;" flex="1" type="checkbox" editable="true"/>
+                <treecol id="hexCol" label="&settings.colname.hex;" flex="1" type="checkbox" editable="true"/>
+              </treecols>
+              <treechildren id="treeChild"/>
+            </tree>
+            <hbox>
+              <button label="&settings.button.del;" onclick="PassGen.del(event);"/>
+              <button label="&settings.button.delAll;" onclick="PassGen.delAll();"/>
+              <textbox id="findBox" oninput="PassGen.findDomain();" emptytext="&settings.findBox;"/>
+              <spacer flex="1"/>
+              <button label="&settings.button.export;" onclick="PassGen.exportFile();"/>
+              <button label="&settings.button.import;" onclick="PassGen.importFile();"/>
+            </hbox>
+          </vbox>
+        </tabpanel>
+      </tabpanels>
+    </tabbox>
+  </prefpane>
+</prefwindow>
