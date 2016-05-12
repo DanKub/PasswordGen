@@ -7,7 +7,7 @@ Users no longer have to remember all their different passwords what they use. Wi
 1. Go to your favourite web page<br />
 2. Sign in<br />
 3. Enter your password<br />
-4. PasswordGen will replace your entered password with generated strong password<br />
+4. Entered password is automatically replaced by generated password<br />
 
 ##Installation
 Addon could be installed through [Add-ons for Firefox](https://addons.mozilla.org/firefox/addon/passwordgen3/)
