@@ -1,4 +1,5 @@
 # PasswordGen
+##Description
 PasswordGen is a single purpose password generator extension for Mozilla Firefox web browser. By user pre-specified preferences, this tool will generate same password on same domains every time. However on the other domains, generated password will be every time different.
 Users no longer have to remember all their different passwords what they use. With this extension users have and use only one password for all domains and PasswordGen will generate different password on every domain for them.
 
@@ -10,7 +11,8 @@ Users no longer have to remember all their different passwords what they use. Wi
 
 ##Installation
 Addon could be installed through [Add-ons for Firefox](https://addons.mozilla.org/firefox/addon/passwordgen3/)
-*****************************************************************************************************************************
+***************************************************************************************************************************
+##Popis
 PasswordGen je generátor jednoúčelových hesiel, ktorý umožňuje na každej stránke (internetovej službe) používateľovi zadať vždy rovnakú heslovú frázu, a na základe definovaných pravidiel a nastavení pre stránku (internetovú službu) sa vygeneruje vždy iné heslo. Vygenerované heslá budú rovnaké len v rámci jednej internetovej služby a pre ostatné služby budú vygenerované heslá vždy odlišné.
 
 ##Použitie:<br />
