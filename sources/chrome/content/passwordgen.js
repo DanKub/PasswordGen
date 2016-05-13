@@ -75,7 +75,10 @@ PassGen = {
     var dbFile = FileUtils.getFile("ProfD", ["passgendb.sqlite"]);
     PassGen.myDatabase = Services.storage.openDatabase(dbFile);
     if(!PassGen.myDatabase.tableExists("Prefs")){
-      PassGen.myDatabase.executeSimpleSQL("CREATE TABLE Prefs(domain varchar(200),lengthPass varchar(2), b64Enc varchar(5), hexEnc varchar(5), secondLDomain varchar(63))");
+      var statement = PassGen.myDatabase.createStatement("CREATE TABLE Prefs(domain varchar(200),lengthPass varchar(2), b64Enc varchar(5), hexEnc varchar(5), secondLDomain varchar(63))");
+      statement.executeAsync();
+      statement.reset();
+      statement.finalize();
     }
   },
 
@@ -194,20 +197,18 @@ PassGen = {
       // Check if domain is already stored in database
       var statement = PassGen.myDatabase.createStatement("SELECT domain FROM Prefs WHERE domain LIKE :domain");
       statement.params.domain = domain;
-      while(statement.executeStep()){
+      while(statement.step()){
         storedDomain = true;
       }
-      statement.reset();
       statement.finalize();
 
       // Check if domain is stored with 2nd level domain
       if(storedDomain){
         var statement = PassGen.myDatabase.createStatement("SELECT domain FROM Prefs WHERE domain LIKE :domain AND secondLDomain is NOT 'null'");
         statement.params.domain = domain;
-        while(statement.executeStep()){
+        while(statement.step()){
           storedDomainWithSecondLDomain = true;
         }
-        statement.reset();
         statement.finalize();
       }
 
@@ -215,7 +216,7 @@ PassGen = {
       else if(!storedDomain){
         var statement = PassGen.myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE :sld LIMIT 1");
         statement.params.sld = sld;
-        while(statement.executeStep()){
+        while(statement.step()){
           storedSecondLDomain = true;
 
           lengthPass = statement.row.lengthPass;
@@ -227,7 +228,6 @@ PassGen = {
           parentB64Enc = b64Enc;
           parentHexEnc = hexEnc;
         }
-        statement.reset();
         statement.finalize();
       }
 
@@ -243,11 +243,10 @@ PassGen = {
         if(storedDomainWithSecondLDomain){
           var statement = PassGen.myDatabase.createStatement("SELECT domain, lengthPass, b64Enc FROM Prefs WHERE domain LIKE :domain");
           statement.params.domain = domain;
-          while(statement.executeStep()){
+          while(statement.step()){
             lengthPass = statement.row.lengthPass;
             b64Enc = statement.row.b64Enc;
           }
-          statement.reset();
           statement.finalize();
 
           strToHash=passBox.value+sld+PassGen.prefsList[7].value;
@@ -256,12 +255,11 @@ PassGen = {
         else if(storedDomain){
           var statement = PassGen.myDatabase.createStatement("SELECT lengthPass, b64Enc FROM Prefs WHERE domain LIKE :domain");
           statement.params.domain = domain;
-          while(statement.executeStep()){
+          while(statement.step()){
             lengthPass = statement.row.lengthPass;
             b64Enc = statement.row.b64Enc;
 
           }
-          statement.reset();
           statement.finalize();
 
           strToHash=passBox.value+domain+PassGen.prefsList[7].value;
@@ -277,7 +275,16 @@ PassGen = {
           var choice = window.confirm(winMsg);
           // If yes, then include...
           if(choice){
-            PassGen.myDatabase.executeSimpleSQL("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(\""+domain+"\",\""+parentLengthPass+"\",\""+parentB64Enc+"\",\""+parentHexEnc+"\",\""+sld+"\")");
+            var statement = PassGen.myDatabase.createStatement("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(:domain, :parentLengthPass, :parentB64Enc, :parentHexEnc, :sld)");
+            statement.params.domain = domain;
+            statement.params.parentLengthPass = parentLengthPass;
+            statement.params.parentB64Enc = parentB64Enc;
+            statement.params.parentHexEnc = parentHexEnc;
+            statement.params.sld = sld;
+
+            statement.executeAsync();
+            statement.reset();
+            statement.finalize();
 
             lengthPass = parentLengthPass;
             b64Enc = parentB64Enc;
@@ -285,7 +292,15 @@ PassGen = {
           }
           // Save domain address. Domain set as 'null'
           else{
-            PassGen.myDatabase.executeSimpleSQL("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(\""+domain+"\",\""+PassGen.prefsList[3].value+"\",\""+PassGen.prefsList[0].value+"\",\""+PassGen.prefsList[1].value+"\", 'null')");
+            var statement = PassGen.myDatabase.createStatement("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(:domain, :lengthPass, :b64Enc, :hexEnc, 'null')");
+            statement.params.domain = domain;
+            statement.params.lengthPass = PassGen.prefsList[3].value;
+            statement.params.b64Enc = PassGen.prefsList[0].value;
+            statement.params.hexEnc = PassGen.prefsList[1].value;
+
+            statement.executeAsync();
+            statement.reset();
+            statement.finalize();
 
             lengthPass = PassGen.prefsList[3].value;
             b64Enc = PassGen.prefsList[0].value;
@@ -295,7 +310,17 @@ PassGen = {
         // If domain neither 2nd level domain is not stored
         else if(!storedSecondLDomain){
           // Save domain with 2nd level domain
-          PassGen.myDatabase.executeSimpleSQL("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(\""+domain+"\",\""+PassGen.prefsList[3].value+"\",\""+PassGen.prefsList[0].value+"\",\""+PassGen.prefsList[1].value+"\",\""+sld+"\")");
+          var statement = PassGen.myDatabase.createStatement("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(:domain, :lengthPass, :b64Enc, :hexEnc, :sld)");
+          statement.params.domain = domain;
+          statement.params.lengthPass = PassGen.prefsList[3].value;
+          statement.params.b64Enc = PassGen.prefsList[0].value;
+          statement.params.hexEnc = PassGen.prefsList[1].value;
+          statement.params.sld = sld;
+
+          statement.executeAsync();
+          statement.reset();
+          statement.finalize();
+
           strToHash=passBox.value+sld+PassGen.prefsList[7].value;
         }
         PassGen.prefWin.PassGen.refreshTree();
@@ -369,7 +394,7 @@ PassGen = {
     var myDatabase = window.arguments[0].myDatabase;
 
     var stmnt = myDatabase.createStatement("SELECT secondLDomain,COUNT(*) AS count FROM(SELECT domain,secondLDomain FROM Prefs ORDER BY secondLDomain) GROUP BY secondLDomain");
-    while(stmnt.executeStep()){
+    while(stmnt.step()){
       var secondLDomain = stmnt.row.secondLDomain;
       var count = stmnt.row.count;
 
@@ -378,7 +403,7 @@ PassGen = {
         var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain IS 'null'");
         var treeChild = document.getElementById("treeChild");
 
-        while (stmnt2.executeStep()) {
+        while (stmnt2.step()) {
           var domain = stmnt2.row.domain;
           var length = stmnt2.row.lengthPass;
           var b64Enc = stmnt2.row.b64Enc;
@@ -410,15 +435,15 @@ PassGen = {
           treeItem.appendChild(treeRow);
           treeChild.appendChild(treeItem);
         }
-        stmnt2.reset();
         stmnt2.finalize();
       }
       // Only one domain address with 2nd level domain stored in database
       if(count == 1 && secondLDomain != 'null'){
-        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE '"+secondLDomain+"' ORDER BY secondLDomain");
+        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE :secondLDomain ORDER BY secondLDomain");
+        stmnt2.params.secondLDomain = secondLDomain;
         var treeChild = document.getElementById("treeChild");
 
-        while (stmnt2.executeStep()) {
+        while (stmnt2.step()) {
           var domain = stmnt2.row.domain;
           var length = stmnt2.row.lengthPass;
           var b64Enc = stmnt2.row.b64Enc;
@@ -452,18 +477,18 @@ PassGen = {
           treeItem.appendChild(treeRow);
           treeChild.appendChild(treeItem);
         }
-        stmnt2.reset();
         stmnt2.finalize();
       }
       // More domain addresses with 2nd level domain stored (sub-addresses of parent address)
       if(count > 1 && secondLDomain != 'null'){
-        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE '"+secondLDomain+"' ORDER BY secondLDomain");
+        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE :secondLDomain ORDER BY secondLDomain");
+        stmnt2.params.secondLDomain = secondLDomain;
         var treeChild = document.getElementById("treeChild");
         var subTreeChild = document.createElement('treechildren');
         var parentItem = true;
         var treeItem = document.createElement('treeitem');
 
-        while (stmnt2.executeStep()) {
+        while (stmnt2.step()) {
           // Parent domain address, which will contain childs
           if(parentItem){
             var domain = stmnt2.row.domain;
@@ -529,11 +554,10 @@ PassGen = {
         }
         treeItem.appendChild(subTreeChild);
         treeChild.appendChild(treeItem);
-        stmnt2.reset();
+
         stmnt2.finalize();
       }
     }
-    stmnt.reset();
     stmnt.finalize();
   },
 
@@ -561,25 +585,38 @@ PassGen = {
           var domain = childList[0].children[0].getAttribute('label');
 
           // Get 2nd level domain of domain address
-          var stmnt =myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE '"+domain+"'");
-          while(stmnt.executeStep()){
+          var stmnt = myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE :domain");
+          stmnt.params.domain = domain;
+
+          while(stmnt.step()){
             secondLDomain = stmnt.row.secondLDomain;
           }
-          stmnt.reset();
           stmnt.finalize();
 
           // Delete 1st level tree item node
           if(treeItem.parentNode.id == "treeChild"){
             if(secondLDomain == 'null'){
-              myDatabase.executeSimpleSQL("DELETE FROM Prefs WHERE domain LIKE '"+domain+"'");
+              var statement = myDatabase.createStatement("DELETE FROM Prefs WHERE domain LIKE :domain");
+              statement.params.domain = domain;
+              statement.executeAsync();
+              statement.reset();
+              statement.finalize();
             }
             else{
-              myDatabase.executeSimpleSQL("DELETE FROM Prefs WHERE secondLDomain IN (SELECT secondLDomain FROM Prefs WHERE domain LIKE '"+domain+"')");
+              var statement = myDatabase.createStatement("DELETE FROM Prefs WHERE secondLDomain IN (SELECT secondLDomain FROM Prefs WHERE domain LIKE :domain)");
+              statement.params.domain = domain;
+              statement.executeAsync();
+              statement.reset();
+              statement.finalize();
             }
           }
           // Delete 2nd level tree item node
           else{
-            myDatabase.executeSimpleSQL("DELETE FROM Prefs WHERE domain LIKE '"+domain+"'");
+            var statement = myDatabase.createStatement("DELETE FROM Prefs WHERE domain LIKE :domain");
+            statement.params.domain = domain;
+            statement.executeAsync();
+            statement.reset();
+            statement.finalize();
           }
           treeItem.parentNode.removeChild(treeItem);
         }
@@ -593,7 +630,11 @@ PassGen = {
   */
   delAll(){
     var myDatabase = window.arguments[0].myDatabase;
-    myDatabase.executeSimpleSQL("DELETE FROM Prefs");
+    var statement = myDatabase.createStatement("DELETE FROM Prefs");
+    statement.executeAsync();
+    statement.reset();
+    statement.finalize();
+
     var treeChild = document.getElementById("treeChild");
     while(treeChild.hasChildNodes()){
       treeChild.removeChild(treeChild.firstChild);
@@ -635,18 +676,29 @@ PassGen = {
     var myDatabase = window.arguments[0].myDatabase;
     // Update parent and child nodes
     if(childList.length > 1){
-      var stmnt =myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE '"+domain+"'");
-      while(stmnt.executeStep()){
+      var stmnt =myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE :domain");
+      stmnt.params.domain = domain;
+
+      while(stmnt.step()){
         var secondLDomain = stmnt.row.secondLDomain;
       }
-      stmnt.reset();
       stmnt.finalize();
 
-      myDatabase.executeSimpleSQL("UPDATE Prefs SET lengthPass = "+length+" WHERE secondLDomain LIKE '"+secondLDomain+"'");
+      stmnt = myDatabase.createStatement("UPDATE Prefs SET lengthPass = :lengthPass WHERE secondLDomain LIKE :secondLDomain");
+      stmnt.params.lengthPass = length;
+      stmnt.params.secondLDomain = secondLDomain;
+      stmnt.executeAsync();
+      stmnt.reset();
+      stmnt.finalize();
     }
     // Update only one node - parent node with no child nodes
     else{
-      myDatabase.executeSimpleSQL("UPDATE Prefs SET lengthPass = "+length+" WHERE domain LIKE '"+domain+"'");
+      var stmnt = myDatabase.createStatement("UPDATE Prefs SET lengthPass = :lengthPass WHERE domain LIKE :domain");
+      stmnt.params.lengthPass = length;
+      stmnt.params.domain = domain;
+      stmnt.executeAsync();
+      stmnt.reset();
+      stmnt.finalize();
     }
   },
 
@@ -672,24 +724,31 @@ PassGen = {
 
       // Update parent and child nodes
       if(childList.length > 1){
-        var stmnt =myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE '"+domain+"'");
-        while(stmnt.executeStep()){
+        var stmnt =myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE :domain");
+        stmnt.params.domain = domain;
+
+        while(stmnt.step()){
           var secondLDomain = stmnt.row.secondLDomain;
         }
-        stmnt.reset();
         stmnt.finalize();
 
         // If Base-64 is selected, then HEX is deselected
         if(treeItem.children[0].children[2].getAttribute('value') == 'true'){
           treeItem.children[0].children[3].setAttribute('value', 'false');
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET b64Enc = 'true' WHERE secondLDomain LIKE '"+secondLDomain+"'");
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET hexEnc = 'false' WHERE secondLDomain LIKE '"+secondLDomain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET b64Enc = 'true', hexEnc = 'false' WHERE secondLDomain LIKE :secondLDomain");
+          stmnt.params.secondLDomain = secondLDomain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
         // If Base-64 is deselected, then HEX is selected
         else if(treeItem.children[0].children[2].getAttribute('value') == 'false'){
           treeItem.children[0].children[3].setAttribute('value', 'true');
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET b64Enc = 'false' WHERE secondLDomain LIKE '"+secondLDomain+"'");
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET hexEnc = 'true' WHERE secondLDomain LIKE '"+secondLDomain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET b64Enc = 'false', hexEnc = 'true' WHERE secondLDomain LIKE :secondLDomain");
+          stmnt.params.secondLDomain = secondLDomain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
       }
       // Update only one node - parent node with no child nodes
@@ -697,14 +756,20 @@ PassGen = {
         // If Base-64 is selected, then HEX is deselected
         if(treeItem.children[0].children[2].getAttribute('value') == 'true'){
           treeItem.children[0].children[3].setAttribute('value', 'false');
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET b64Enc = 'true' WHERE domain LIKE '"+domain+"'");
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET hexEnc = 'false' WHERE domain LIKE '"+domain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET b64Enc = 'true', hexEnc = 'false' WHERE domain LIKE :domain");
+          stmnt.params.domain = domain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
         // If Base-64 is deselected, then HEX is selected
         else if(treeItem.children[0].children[2].getAttribute('value') == 'false'){
           treeItem.children[0].children[3].setAttribute('value', 'true');
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET b64Enc = 'false' WHERE domain LIKE '"+domain+"'");
-          myDatabase.executeSimpleSQL("UPDATE Prefs SET hexEnc = 'true' WHERE domain LIKE '"+domain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET b64Enc = 'false', hexEnc = 'true' WHERE domain LIKE :domain");
+          stmnt.params.domain = domain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
       }
     }
@@ -716,24 +781,31 @@ PassGen = {
 
       // Update parent and child nodes
       if(childList.length > 1){
-        var stmnt =myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE '"+domain+"'");
-        while(stmnt.executeStep()){
+        var stmnt =myDatabase.createStatement("SELECT secondLDomain FROM Prefs WHERE domain LIKE :domain");
+        stmnt.params.domain = domain;
+
+        while(stmnt.step()){
           var secondLDomain = stmnt.row.secondLDomain;
         }
-        stmnt.reset();
         stmnt.finalize();
 
         // If HEX is selected, then Base-64 is deselected
         if(treeItem.children[0].children[3].getAttribute('value') == 'true'){
           treeItem.children[0].children[2].setAttribute('value', 'false');
-          myDatabase.executeSimpleSQL("UPDATE prefs SET hexEnc = 'true' WHERE secondLDomain LIKE '"+secondLDomain+"'");
-          myDatabase.executeSimpleSQL("UPDATE prefs SET b64Enc = 'false' WHERE secondLDomain LIKE '"+secondLDomain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET hexEnc = 'true', b64Enc = 'false' WHERE secondLDomain LIKE :secondLDomain");
+          stmnt.params.secondLDomain = secondLDomain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
         // If HEX is deselected, then Base-64 is selected
         else if(treeItem.children[0].children[3].getAttribute('value') == 'false'){
           treeItem.children[0].children[2].setAttribute('value', 'true');
-          myDatabase.executeSimpleSQL("UPDATE prefs SET hexEnc = 'false' WHERE secondLDomain LIKE '"+secondLDomain+"'");
-          myDatabase.executeSimpleSQL("UPDATE prefs SET b64Enc = 'true' WHERE secondLDomain LIKE '"+secondLDomain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET hexEnc = 'false', b64Enc = 'true' WHERE secondLDomain LIKE :secondLDomain");
+          stmnt.params.secondLDomain = secondLDomain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
       }
       // Update only one node - parent node with no child nodes
@@ -741,14 +813,20 @@ PassGen = {
         // If HEX is selected, then Base-64 is deselected
         if(treeItem.children[0].children[3].getAttribute('value') == 'true'){
           treeItem.children[0].children[2].setAttribute('value', 'false');
-          myDatabase.executeSimpleSQL("UPDATE prefs SET hexEnc = 'true' WHERE domain LIKE '"+domain+"'");
-          myDatabase.executeSimpleSQL("UPDATE prefs SET b64Enc = 'false' WHERE domain LIKE '"+domain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET hexEnc = 'true', b64Enc = 'false' WHERE domain LIKE :domain");
+          stmnt.params.domain = domain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
         // If HEX is deselected, then Base-64 is selected
         else if(treeItem.children[0].children[3].getAttribute('value') == 'false'){
           treeItem.children[0].children[2].setAttribute('value', 'true');
-          myDatabase.executeSimpleSQL("UPDATE prefs SET hexEnc = 'false' WHERE domain LIKE '"+domain+"'");
-          myDatabase.executeSimpleSQL("UPDATE prefs SET b64Enc = 'true' WHERE domain LIKE '"+domain+"'");
+          var stmnt = myDatabase.createStatement("UPDATE Prefs SET hexEnc = 'false', b64Enc = 'true' WHERE domain LIKE :domain");
+          stmnt.params.domain = domain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
       }
     }
@@ -779,7 +857,7 @@ PassGen = {
       var myDatabase = window.arguments[0].myDatabase;
       var stmnt = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc, secondLDomain FROM Prefs");
 
-      while (stmnt.executeStep()){
+      while (stmnt.step()){
         var domain = stmnt.row.domain;
         var length = stmnt.row.lengthPass;
         var b64Enc = stmnt.row.b64Enc;
@@ -787,6 +865,7 @@ PassGen = {
         var secondLDomain = stmnt.row.secondLDomain;
         obj.settings.push({'domain':domain, 'length':length, 'b64Enc':b64Enc, 'hexEnc':hexEnc, 'secondLDomain':secondLDomain});
       }
+      stmnt.finalize();
 
       // Fill JSON object with data from prefsList
       obj.preferences = window.arguments[0].prefsList;
@@ -855,7 +934,15 @@ PassGen = {
         // Save data from JSON file into DB
         var myDatabase = window.arguments[0].myDatabase;
         for(var i=0; i<obj.settings.length; i++){
-          myDatabase.executeSimpleSQL("INSERT INTO Prefs VALUES (\""+obj.settings[i].domain+"\", \""+obj.settings[i].length+"\", \""+obj.settings[i].b64Enc+"\", \""+obj.settings[i].hexEnc+"\", \""+obj.settings[i].secondLDomain+"\")")
+          var stmnt = myDatabase.createStatement("INSERT INTO Prefs VALUES (:domain, :lengthPass, :b64Enc, :hexEnc, :secondLDomain)");
+          stmnt.params.domain = obj.settings[i].domain;
+          stmnt.params.lengthPass = obj.settings[i].length;
+          stmnt.params.b64Enc = obj.settings[i].b64Enc;
+          stmnt.params.hexEnc = obj.settings[i].hexEnc;
+          stmnt.params.secondLDomain = obj.settings[i].secondLDomain;
+          stmnt.executeAsync();
+          stmnt.reset();
+          stmnt.finalize();
         }
 
         // Save Gen Preferences from JSON to prefsList
@@ -1031,17 +1118,23 @@ PassGen = {
       return;
     }
 
-    var stmnt = myDatabase.createStatement("SELECT secondLDomain,COUNT(*) AS count FROM (SELECT domain,secondLDomain FROM Prefs WHERE domain LIKE '%"+findBox.value+"%' ORDER BY secondLDomain) GROUP BY secondLDomain");
-    while(stmnt.executeStep()){
+    var stmnt = myDatabase.createStatement("SELECT secondLDomain,COUNT(*) AS count FROM (SELECT domain,secondLDomain FROM Prefs WHERE domain LIKE :findBox ORDER BY secondLDomain) GROUP BY secondLDomain");
+    var findBoxParam = "%"+findBox.value+"%";
+    stmnt.params.findBox = findBoxParam;
+
+    while(stmnt.step()){
       var secondLDomain = stmnt.row.secondLDomain;
       var count = stmnt.row.count;
 
       // Only domain address without 2nd level domain
       if(secondLDomain == 'null'){
-        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain IS 'null' AND domain LIKE '%"+findBox.value+"%'");
+        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain IS 'null' AND domain LIKE :findBox");
+        var findBoxParam = "%"+findBox.value+"%";
+        stmnt2.params.findBox = findBoxParam;
+
         treeChild = document.getElementById("treeChild");
 
-        while (stmnt2.executeStep()) {
+        while (stmnt2.step()) {
           var domain = stmnt2.row.domain;
           var length = stmnt2.row.lengthPass;
           var b64Enc = stmnt2.row.b64Enc;
@@ -1073,16 +1166,16 @@ PassGen = {
           treeItem.appendChild(treeRow);
           treeChild.appendChild(treeItem);
         }
-        stmnt2.reset();
         stmnt2.finalize();
       }
 
       // Only one domain address with 2nd level domain stored in database
       if(count == 1 && secondLDomain != 'null'){
-        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc, COUNT(*) AS domainCount FROM Prefs WHERE secondLDomain LIKE '"+secondLDomain+"' ORDER BY secondLDomain");
+        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc, COUNT(*) AS domainCount FROM Prefs WHERE secondLDomain LIKE :secondLDomain ORDER BY secondLDomain");
+        stmnt2.params.secondLDomain = secondLDomain;
         treeChild = document.getElementById("treeChild");
 
-        while (stmnt2.executeStep()) {
+        while (stmnt2.step()) {
           var domain = stmnt2.row.domain;
           var length = stmnt2.row.lengthPass;
           var b64Enc = stmnt2.row.b64Enc;
@@ -1091,13 +1184,14 @@ PassGen = {
 
           // If domain address has some childs
           if(domainCount > 1){
-            var stmnt3 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE '"+secondLDomain+"' ORDER BY secondLDomain");
+            var stmnt3 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE :secondLDomain ORDER BY secondLDomain");
+            stmnt3.params.secondLDomain = secondLDomain;
             treeChild = document.getElementById("treeChild");
             var subTreeChild = document.createElement('treechildren');
             var parentItem = true;
             var treeItem = document.createElement('treeitem');
 
-            while (stmnt3.executeStep()) {
+            while (stmnt3.step()) {
               // Parent domain address, which will contain childs
               if(parentItem){
                 var domain = stmnt3.row.domain;
@@ -1163,7 +1257,7 @@ PassGen = {
             }
             treeItem.appendChild(subTreeChild);
             treeChild.appendChild(treeItem);
-            stmnt3.reset();
+
             stmnt3.finalize();
           }
           else{
@@ -1196,19 +1290,19 @@ PassGen = {
             treeChild.appendChild(treeItem);
           }
         }
-        stmnt2.reset();
         stmnt2.finalize();
       }
 
       // More domain addresses with 2nd level domain stored (sub-addresses of parent address)
       if(count > 1 && secondLDomain != 'null'){
-        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE '"+secondLDomain+"' ORDER BY secondLDomain");
+        var stmnt2 = myDatabase.createStatement("SELECT domain, lengthPass, b64Enc, hexEnc FROM Prefs WHERE secondLDomain LIKE :secondLDomain ORDER BY secondLDomain");
+        stmnt2.params.secondLDomain = secondLDomain;
         treeChild = document.getElementById("treeChild");
         var subTreeChild = document.createElement('treechildren');
         var parentItem = true;
         var treeItem = document.createElement('treeitem');
 
-        while (stmnt2.executeStep()) {
+        while (stmnt2.step()) {
           // Parent domain address, which will contain childs
           if(parentItem){
             var domain = stmnt2.row.domain;
@@ -1274,11 +1368,10 @@ PassGen = {
         }
         treeItem.appendChild(subTreeChild);
         treeChild.appendChild(treeItem);
-        stmnt2.reset();
+
         stmnt2.finalize();
       }
     }
-    stmnt.reset();
     stmnt.finalize();
   },
 
