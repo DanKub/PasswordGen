@@ -67,6 +67,7 @@ PassGen = {
     PassGen.prefs.addObserver("", this, false);
 
     PassGen.prefers();
+    PassGen.setIconStyle();
 
     Components.utils.import("resource://gre/modules/Services.jsm");
     Components.utils.import("resource://gre/modules/FileUtils.jsm");
@@ -137,10 +138,10 @@ PassGen = {
   * @function setIconStyle
   */
   setIconStyle(){
-    if(PassGen.prefsList[2].value==true){ // If Active
+    if(PassGen.prefsList[2].value==true && document.documentElement.id == "main-window"){ // If Active
       document.getElementById("passgen-button").setAttribute("style","list-style-image: url(\"chrome://passwordgen/skin/active.png\")");
     }
-    else{
+    else if(PassGen.prefsList[2].value==false && document.documentElement.id == "main-window"){
       document.getElementById("passgen-button").setAttribute("style","list-style-image: url(\"chrome://passwordgen/skin/deactive.png\")");
     }
   },
@@ -1505,7 +1506,10 @@ window.addEventListener("load", function load(event){
 
 // Call method "closeWin" after close browser event
 window.addEventListener("close", function close(event){
-	PassGen.closeWin();}, false);
+  if(document.documentElement.id == "main-window"){
+    PassGen.closeWin();
+  }
+}, false);
 
 // Show "Generate password" item in context menu
 window.addEventListener("contextmenu", function(e){
