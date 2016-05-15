@@ -67,7 +67,6 @@ PassGen = {
     PassGen.prefs.addObserver("", this, false);
 
     PassGen.prefers();
-    PassGen.setIconStyle();
 
     Components.utils.import("resource://gre/modules/Services.jsm");
     Components.utils.import("resource://gre/modules/FileUtils.jsm");
@@ -91,7 +90,6 @@ PassGen = {
   */
   observe(subject, topic, data){
     PassGen.prefers();
-    PassGen.setIconStyle();
   },
 
   /**
@@ -295,8 +293,8 @@ PassGen = {
             var statement = PassGen.myDatabase.createStatement("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(:domain, :lengthPass, :b64Enc, :hexEnc, 'null')");
             statement.params.domain = domain;
             statement.params.lengthPass = PassGen.prefsList[3].value;
-            statement.params.b64Enc = PassGen.prefsList[0].value;
-            statement.params.hexEnc = PassGen.prefsList[1].value;
+            statement.params.b64Enc = String(PassGen.prefsList[0].value);
+            statement.params.hexEnc = String(PassGen.prefsList[1].value);
 
             statement.executeAsync();
             statement.reset();
@@ -313,8 +311,8 @@ PassGen = {
           var statement = PassGen.myDatabase.createStatement("INSERT INTO Prefs(domain, lengthPass, b64Enc, hexEnc, secondLDomain) Values(:domain, :lengthPass, :b64Enc, :hexEnc, :sld)");
           statement.params.domain = domain;
           statement.params.lengthPass = PassGen.prefsList[3].value;
-          statement.params.b64Enc = PassGen.prefsList[0].value;
-          statement.params.hexEnc = PassGen.prefsList[1].value;
+          statement.params.b64Enc = String(PassGen.prefsList[0].value);
+          statement.params.hexEnc = String(PassGen.prefsList[1].value);
           statement.params.sld = sld;
 
           statement.executeAsync();
@@ -360,7 +358,7 @@ PassGen = {
 
         var pass=sha512Obj.b64_sha512(strToHash).substring(0,lengthPass);
         passBox.value=pass;
-        passBox.focus();
+        passBox.blur();
         PassGen.showPass(pass);
       }
       // Generate HEX encoded password
@@ -372,7 +370,7 @@ PassGen = {
 
         var pass=sha512Obj.hex_sha512(strToHash).substring(0,lengthPass);
         passBox.value=pass;
-        passBox.focus();
+        passBox.blur();
         PassGen.showPass(pass);
       }
     }
@@ -714,8 +712,11 @@ PassGen = {
     var row = { }, col = { }, child = { };
     tbo.getCellAt(event.clientX, event.clientY, row, col, child);
 
-    // Only one type of encoding could be set
+    if(col.value == null){
+      return;
+    }
 
+    // Only one type of encoding could be set
     if(col.value.id == "b64Col"){
       var myDatabase = window.arguments[0].myDatabase;
       var treeItem = tree.contentView.getItemAtIndex(row.value);
@@ -753,6 +754,10 @@ PassGen = {
       }
       // Update only one node - parent node with no child nodes
       else{
+        // If is clicked on child node - do nothing
+        if(treeItem.children[0].children[2] == null){
+          return;
+        }
         // If Base-64 is selected, then HEX is deselected
         if(treeItem.children[0].children[2].getAttribute('value') == 'true'){
           treeItem.children[0].children[3].setAttribute('value', 'false');
@@ -810,6 +815,10 @@ PassGen = {
       }
       // Update only one node - parent node with no child nodes
       else{
+        // If is clicked on child node - do nothing
+        if(treeItem.children[0].children[2] == null){
+          return;
+        }
         // If HEX is selected, then Base-64 is deselected
         if(treeItem.children[0].children[3].getAttribute('value') == 'true'){
           treeItem.children[0].children[2].setAttribute('value', 'false');
@@ -1409,12 +1418,10 @@ PassGen = {
     Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
               .getService(Components.interfaces.mozIJSSubScriptLoader);
     Components.utils.import("resource://gre/modules/FileUtils.jsm");
-    //Components.utils.import("resource://gre/modules/NetUtil.jsm");
     Services.scriptloader.loadSubScript("chrome://passwordgen/content/publicsuffixlist.js", psl);
     Services.scriptloader.loadSubScript("chrome://passwordgen/content/punycode.js", puny);
 
     var suffListData = "";
-    var str={};
     var currentSuffList = FileUtils.getFile("ProfD", ["sufflist.dat"]);
     var fstream = Components.classes["@mozilla.org/network/file-input-stream;1"].createInstance(Components.interfaces.nsIFileInputStream);
     var cstream = Components.classes["@mozilla.org/intl/converter-input-stream;1"].createInstance(Components.interfaces.nsIConverterInputStream);
@@ -1422,8 +1429,14 @@ PassGen = {
     try{ // Use current version of sufflist
       fstream.init(currentSuffList, -1, 0, 0);
       cstream.init(fstream, "UTF-8", 0, 0);
-      cstream.readString(-1, str);
-      suffListData = str.value;
+
+      var str = {};
+      var read = 0;
+      do{
+        read = cstream.readString(0xffffffff, str);
+        suffListData += str.value;
+      } while (read != 0);
+
       cstream.close();
     }
     catch(e){ // If some error, use old version of sufflist included with extension
@@ -1496,8 +1509,8 @@ window.addEventListener("close", function close(event){
 
 // Show "Generate password" item in context menu
 window.addEventListener("contextmenu", function(e){
-  // If active
-  if(PassGen.prefsList[2].value==true){
+  // If active and right click on main window
+  if(PassGen.prefsList[2].value==true && document.documentElement.id == "main-window"){
     if(e.target.nodeName.toLowerCase() == "input" && e.target.type.toLowerCase() == "password"){
       document.getElementById("context-generate").hidden = false;
       PassGen.passBoxTarget = e.target;
@@ -1508,7 +1521,7 @@ window.addEventListener("contextmenu", function(e){
       PassGen.passBoxTarget = null;
     }
   }
-  else{
+  else if (document.documentElement.id == "main-window"){
     document.getElementById("separator-generate").hidden = true;
     document.getElementById("context-generate").hidden = true;
     PassGen.passBoxTarget = null;
