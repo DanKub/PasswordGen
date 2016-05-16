@@ -124,7 +124,7 @@
             <hbox>
               <button label="&settings.button.del;" onclick="PassGen.del(event);"/>
               <button label="&settings.button.delAll;" onclick="PassGen.delAll();"/>
-              <textbox id="findBox" oninput="PassGen.findDomain();" emptytext="&settings.findBox;"/>
+              <textbox id="findBox" maxlength="100" oninput="PassGen.findDomain();" emptytext="&settings.findBox;"/>
               <spacer flex="1"/>
               <button label="&settings.button.export;" onclick="PassGen.exportFile();"/>
               <button label="&settings.button.import;" onclick="PassGen.importFile();"/>

@@ -6,7 +6,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>password@gen.net</em:id>
     <em:type>2</em:type>
-    <em:version>2.1</em:version>
+    <em:version>2.2</em:version>
    <em:iconURL>chrome://passwordgen/skin/active.png</em:iconURL>
 
     <em:targetApplication>

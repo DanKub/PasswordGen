@@ -6,3 +6,4 @@ pref("extensions.passwordgen.passShowTime", "0");
 pref("extensions.passwordgen.useStored", true);
 pref("extensions.passwordgen.store", true);
 pref("extensions.passwordgen.const", "");
+pref("extensions.passwordgen.toolbar-button-set",false);

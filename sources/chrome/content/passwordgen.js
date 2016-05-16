@@ -66,6 +66,28 @@ PassGen = {
     PassGen.prefs = PassGen.prefs.getBranch("extensions.passwordgen.");
     PassGen.prefs.addObserver("", this, false);
 
+    // Add Button of PasswordGen to toolbar after install
+    var isToolBarButtonSet = PassGen.prefs.getBoolPref("toolbar-button-set", false);
+    if (!isToolBarButtonSet) {
+      try {
+        var toolbarID = "passgen-button";
+        var toolbarMain = document.getElementById("nav-bar");
+        var set  = toolbarMain.currentSet.split(",");
+        if (set.indexOf(toolbarID) == -1) {
+          set.push(toolbarID);
+          toolbarMain.setAttribute("currentset", set.join(","));
+          toolbarMain.currentSet = set.join(",");
+          document.persist(toolbarMain.id, "currentset");
+          try {
+            BrowserToolboxCustomizeDone(true);
+          }
+          catch (e) {}
+        }
+        PassGen.prefs.setBoolPref("toolbar-button-set", true);
+      }
+      catch(e) {}
+    }
+
     PassGen.prefers();
     PassGen.setIconStyle();
 
@@ -328,11 +350,15 @@ PassGen = {
       // If domain is stored, "Save settings" preference is set and "Use saved settings for password generating" preference is not set
       if(storedDomain && (PassGen.prefsList[6].value==true) && (PassGen.prefsList[5].value==false)){
         alert(strBun.getString('domainSaved'));
+        lengthPass=PassGen.prefsList[3].value;
+        b64Enc=PassGen.prefsList[0].value;
+        strToHash=passBox.value+domain+PassGen.prefsList[7].value;
       }
 
       // If domain is not already stored, "Save settings" preference is not set and "Use saved settings for password generating" preference is set
       if(!storedDomain && (PassGen.prefsList[6].value==false) && (PassGen.prefsList[5].value==true)){
         alert(strBun.getString('domainNotSaved'));
+        return;
       }
 
       // If "Save settings" and "Use saved settings for password generating" preference is not set
@@ -1493,7 +1519,7 @@ PassGen = {
   * @function closeWin
   */
   closeWin(){
-    PassGen.myDatabase.close();
+    PassGen.myDatabase.asyncClose();
   },
 };
 
