@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+    "name": "PasswordGen",
+    "description": "__MSG_extensionDescription__",
+    "version": "3.0",
+    "author": "Daniel Kubica",
+    "default_locale": "en",
+    "homepage_url": "https://github.com/DanKub/PasswordGen",
+    "icons": {
+        "64": "icons/active-64.png"
+    },
+
+    "browser_action": {
+        "browser_style": true,
+        "default_icon": "icons/active-64.png",
+        "default_title": "PasswordGen",
+        "default_popup": "popup/menu.html"
+    }
+}
