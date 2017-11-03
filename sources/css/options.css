@@ -1,0 +1,24 @@
+label{
+    display: inline-block;
+    clear: left;
+    width: 200px;
+    text-align: right;
+    padding: 1em;
+}
+
+input.number{
+    width: 55px;
+}
+
+p{
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+#cb_save_settings{
+    text-align: left;
+}
+
+#cb_use_saved_settings{
+    text-align: left;
+}

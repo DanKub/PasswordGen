@@ -15,5 +15,9 @@
         "default_icon": "icons/active-64.png",
         "default_title": "PasswordGen",
         "default_popup": "popup/menu.html"
+    },
+
+    "options_ui": {
+        "page": "options/options.html"    
     }
 }
