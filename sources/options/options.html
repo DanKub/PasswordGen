@@ -3,38 +3,39 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <link rel="stylesheet" href="../css/options.css">
+        <link rel="stylesheet" href="options.css">
     </head>
 
     <body>
         <p>Generator properties</p>
         <div>
             <label>Password length:</label>
-            <input type="number" id="pwd_length" class="number" min="1" max="64">
+            <input type="number" id="in_pwd_length" class="number" min="1" max="64">
         </div>
         <div>
             <label>Constant:</label>
-            <input type="text" id="constant">
+            <input type="text" id="in_constant">
         </div>
         <div>
             <label>Encoding:</label>
-            <input type="radio" id="enc_base64" value="base-64"> Base-64
-            <input type="radio" id="enc_hex" value="hex"> HEX
+            <input type="radio" id="rb_base64" name="encoding" value="base-64", checked> Base-64
+            <input type="radio" id="rb_hex" name="encoding" value="hex"> HEX
         </div>
         <div>
             <label>Password showing time:</label>
-            <input type="number" id="pwd_time" class="number" min="0" max="60">
+            <input type="number" id="in_time" class="number" min="0" max="60">
         </div>
         </div>
 
         <p>Storage settings</p>
         <div>
-            <input type="checkbox" id="save_settings">
-            <label id="cb_save_settings">Save settings</label>
+            <input type="checkbox" id="cb_store">
+            <label id="lbl_store">Save settings</label>
         </div>
         <div>
-            <input type="checkbox" id="use_saved_settings" class="checkbox">
-            <label id="cb_use_saved_settings">Use saved settings for password generating</label>
+            <input type="checkbox" id="cb_use_stored" class="checkbox">
+            <label id="lbl_use_stored">Use saved settings for password generating</label>
         </div>
+        <script src="options.js"></script>
     </body>
 </html>

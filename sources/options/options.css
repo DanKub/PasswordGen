@@ -15,10 +15,10 @@ p{
     font-size: 1.1em;
 }
 
-#cb_save_settings{
+#lbl_save_settings{
     text-align: left;
 }
 
-#cb_use_saved_settings{
+#lbl_use_saved_settings{
     text-align: left;
 }
