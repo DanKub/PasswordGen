@@ -14,7 +14,7 @@
         "browser_style": true,
         "default_icon": "icons/active-64.png",
         "default_title": "PasswordGen",
-        "default_popup": "popup/menu.html"
+        "default_popup": "popup/popup.html"
     },
 
     "options_ui": {
@@ -22,6 +22,7 @@
     },
 
     "permissions":[
-        "storage"
+        "storage",
+        "tabs"
     ]
 }

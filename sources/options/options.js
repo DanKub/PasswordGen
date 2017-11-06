@@ -11,7 +11,7 @@ var cb_use_stored = document.getElementById("cb_use_stored");
 /*
 Store the currently selected settings using browser.storage.local.
 */
-function savePreferences(){
+function savePreferences() {
     let preferences = {
         length: in_pwd_length.value,
         constant: in_constant.value,
@@ -28,7 +28,7 @@ function savePreferences(){
 /*
 On opening the options page, fetch stored settings and update the UI with them.
 */
-function loadPreferences(){
+function loadPreferences() {
     let p = browser.storage.local.get();
     p.then(updateUI, onError);
 }
@@ -37,7 +37,7 @@ function loadPreferences(){
 Update the options UI with the settings values retrieved from storage,
 or the default settings if the stored settings are empty.
 */
-function updateUI(item){
+function updateUI(item) {
     in_pwd_length.value = item.length || "15";
     in_constant.value = item.constant || "";
     rb_base64.checked = item.base64 || true;
@@ -49,8 +49,8 @@ function updateUI(item){
 
 function onError(err) {
     console.error(err);
-  }
-  
+}
+
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
