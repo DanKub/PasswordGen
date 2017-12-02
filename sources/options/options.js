@@ -12,7 +12,7 @@ var cb_use_stored = document.getElementById("cb_use_stored");
 Store the currently selected settings using browser.storage.local.
 */
 function savePreferences() {
-    let preferences = {
+    var preferences = {
         length: in_pwd_length.value,
         constant: in_constant.value,
         base64: rb_base64.checked,
@@ -21,7 +21,7 @@ function savePreferences() {
         store: cb_store.checked,
         use_stored: cb_use_stored.checked
     }
-    let p = browser.storage.local.set(preferences);
+    var p = browser.storage.local.set(preferences);
     p.then(null, onError);
 }
 
@@ -29,7 +29,7 @@ function savePreferences() {
 On opening the options page, fetch stored settings and update the UI with them.
 */
 function loadPreferences() {
-    let p = browser.storage.local.get();
+    var p = browser.storage.local.get();
     p.then(updateUI, onError);
 }
 
