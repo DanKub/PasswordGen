@@ -1,5 +1,18 @@
 var in_tab_domain = document.getElementById("in_tab_domain");
+var in_inserted_pwd = document.getElementById("in_inserted_pwd");
+var in_generated_pwd = document.getElementById("in_generated_pwd");
 var suffListData;
+
+//Default preferences will be overwritten after call loadPreferences()
+var preferences = {
+    length: null,
+    constant: null,
+    base64: null,
+    hex: null,
+    time: null,
+    store: null,
+    use_stored: null
+}
 
 /* 
 Return second level domain from given URL
@@ -45,6 +58,46 @@ function getDBSuffList(suffListDB) {
     }
 }
 
+function generatePassword(){
+    var pwdLength = preferences.length;
+    var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+
+    if (preferences.base64 == true && preferences.hex == false){
+        var pwd = b64_sha512(strToHash);
+        for (let i = 1; i < 1000; i++){
+            pwd = b64_sha512(pwd);
+        }
+        in_generated_pwd.value = pwd.substring(0,pwdLength);
+    }
+    else if(preferences.hex == true && preferences.base64 == false){
+        var pwd = hex_sha512(strToHash);
+        for (let i = 1; i < 1000; i++){
+            pwd = hex_sha512(pwd);
+        }
+        in_generated_pwd.value = pwd.substring(0,pwdLength);
+    }
+    
+}
+
+function loadPreferences(){
+    var p = browser.storage.local.get();
+    p.then(onSuccess, onError);
+
+    function onSuccess(item){
+        preferences.length = item.length;
+        preferences.constant = item.constant;
+        preferences.base64 = item.base64;
+        preferences.hex = item.hex;
+        preferences.time = item.time;
+        preferences.store = item.store;
+        preferences.use_stored = item.use_stored;
+    }
+
+    function onError(err){
+        console.error(err);
+    }
+}
+
 // Open DB with Public Suffix List
 var dbOpenReq = window.indexedDB.open("PubSuffList");
 
@@ -56,3 +109,14 @@ dbOpenReq.onsuccess = function (event) {
     console.log("IndexedDB PubSuffList successfully open");
     getDBSuffList(event.target.result);
 }
+
+loadPreferences();
+
+in_inserted_pwd.addEventListener("change", generatePassword);
+
+
+// var backgroundPort = browser.runtime.connect({name:"popup-port"}); //connect to backround.js
+
+// backgroundPort.onMessage.addListener(function(m) {
+//   console.log(m);
+// });

@@ -34,17 +34,16 @@ function loadPreferences() {
 }
 
 /*
-Update the options UI with the settings values retrieved from storage,
-or the default settings if the stored settings are empty.
+Update the options UI with the settings values retrieved from storage
 */
 function updateUI(item) {
-    in_pwd_length.value = item.length || "15";
-    in_constant.value = item.constant || "";
-    rb_base64.checked = item.base64 || true;
-    rb_hex.checked = item.hex || false;
-    in_time.value = item.time || "0";
-    cb_store.checked = item.store || true;
-    cb_use_stored.checked = item.use_stored || true;
+    in_pwd_length.value = item.length;
+    in_constant.value = item.constant;
+    rb_base64.checked = item.base64;
+    rb_hex.checked = item.hex;
+    in_time.value = item.time;
+    cb_store.checked = item.store;
+    cb_use_stored.checked = item.use_stored;
 }
 
 function onError(err) {

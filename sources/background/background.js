@@ -1,4 +1,15 @@
 var suffListDB;
+var popupPort;
+
+var preferences = {
+    length: "15",
+    constant: "",
+    base64: true,
+    hex: false,
+    time: "0",
+    store: true,
+    use_stored: true
+}
 
 function putSuffListDataToDB(data) {
     var transaction = suffListDB.transaction(["pubsufflist"], "readwrite");
@@ -76,9 +87,40 @@ function initDB() {
     }
 }
 
+function initPreferences(){
+    var p = browser.storage.local.get();
+    p.then(
+        function(prefObj){
+            if (Object.keys(prefObj).length == 0){ //if retrieved object has no keys (if no preferences are stored), then set default preferences
+                var p = browser.storage.local.set(preferences);
+                p.then(null, function(err){console.error(err);});
+            }
+        },
+        function(err){
+            console.error(err);
+        }
+    );
+}
+
+
+
+
 //TODO: Pridat moznost nacitania SuffListu aj zo suboru v pripade, ze nebude fungovat list zo servera
 
 initDB();
+initPreferences();
+
+
+
+
+// function portCommunication(p) {
+//     popupPort = p;
+//     popupPort.postMessage({greeting: "Hello from BACKGROUND"});
+//     // popupPort.postMessage(suffListDB);
+    
+//   }
+  
+//   browser.runtime.onConnect.addListener(portCommunication);
 
 // httpGetAsync("https://publicsuffix.org/list/public_suffix_list.dat");
 
