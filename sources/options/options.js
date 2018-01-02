@@ -50,6 +50,30 @@ function onError(err) {
     console.error(err);
 }
 
+function insertNewTableEntry(){
+    var table = document.getElementById("table_stored_settings");
+    var row = table.insertRow();
+    var domainCell = row.insertCell();
+    var pwdLengthCell = row.insertCell();
+    var base64Cell = row.insertCell();
+    var hexCell = row.insertCell();
+
+    pwdLengthCell.contentEditable = "true";
+
+    var radioBase64 = document.createElement("input");
+    radioBase64.setAttribute("type", "radio");
+    radioBase64.setAttribute("name", "encoding_row" + row.rowIndex);
+    var radioHex = radioBase64.cloneNode(true);
+
+    domainCell.innerHTML = "example";
+    pwdLengthCell.innerHTML = row.rowIndex;
+    base64Cell.appendChild(radioBase64);
+    hexCell.appendChild(radioHex);
+}
+
+for(var i = 0; i < 10; i++){
+    insertNewTableEntry();
+}
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
