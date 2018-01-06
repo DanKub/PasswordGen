@@ -23,7 +23,7 @@ p{
     text-align: left;
 }
 
-#table_stored_settings {
+#table_stored_rules {
     font-family: verdana, arial, sans-serif;
     font-size: 14px;
     color: #333333;
@@ -32,7 +32,7 @@ p{
     border-collapse: collapse;
     width: 99%;
 }
-#table_stored_settings th {
+#table_stored_rules th {
     border-width: 1px;
     padding: 11px;
     border-style: solid;
@@ -40,14 +40,14 @@ p{
     background-color: #4b9dfa;
     color: #ffffff;
 }
-#table_stored_settings tr:hover td {
+#table_stored_rules tr:hover td {
     /* cursor: pointer; */
     background-color: #4ba2fa23
 }
 /* table.table-stored-settings tr:nth-child(even) td{
     background-color: rgb(78, 162, 231);
 } */
-#table_stored_settings td {
+#table_stored_rules td {
     border-width: 1px;
     padding: 5px;
     border-style: solid;

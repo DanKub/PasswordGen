@@ -1,7 +1,11 @@
 var in_tab_domain = document.getElementById("in_tab_domain");
 var in_inserted_pwd = document.getElementById("in_inserted_pwd");
 var in_generated_pwd = document.getElementById("in_generated_pwd");
+var tabDomain;  //Current tab domain (www.example.com)
+var tabSld;     //Current tab second level domain (example)
 var suffListData;
+var genRulesDB;
+
 
 //Default preferences will be overwritten after call loadPreferences()
 var preferences = {
@@ -29,9 +33,9 @@ Get current tab URL, call getSecondLvlDomain and write value to HTML input
 */
 function getCurrentTabDomain(tabs) {
     var urlWithoutProtocol = tabs[0].url.replace(/(^\w+:|^)\/\//, '');
-    var domain = urlWithoutProtocol.match(/[\w.-]+/)[0];
-    var sld = getSecondLvlDomain(domain);
-    in_tab_domain.value = sld;
+    tabDomain = urlWithoutProtocol.match(/[\w.-]+/)[0];
+    tabSld = getSecondLvlDomain(tabDomain);
+    in_tab_domain.value = tabSld; //cela domena, alebo len SLD?
 }
 
 function onError(err) {
@@ -58,6 +62,17 @@ function getDBSuffList(suffListDB) {
     }
 }
 
+function saveGenRule(){
+    var transaction = genRulesDB.transaction(["rules"], "readwrite");
+    var rulesObjStore = transaction.objectStore("rules");
+    rulesObjStore.put({ domain: tabDomain, 
+                        pwdLength: preferences.length,
+                        b64Enc: String(preferences.base64),
+                        hexEnc: String(preferences.hex),
+                        sld: tabSld
+                      }, tabDomain)
+}
+
 function generatePassword(){
     var pwdLength = preferences.length;
     var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
@@ -75,6 +90,11 @@ function generatePassword(){
             pwd = hex_sha512(pwd);
         }
         in_generated_pwd.value = pwd.substring(0,pwdLength);
+    }
+
+    //Ulozenie nastaveni do DB
+    if (preferences.store == true){
+        saveGenRule();
     }
     
 }
@@ -99,18 +119,36 @@ function loadPreferences(){
 }
 
 // Open DB with Public Suffix List
-var dbOpenReq = window.indexedDB.open("PubSuffList");
+function openSuffListDB(){
+    var dbOpenReq = window.indexedDB.open("PubSuffList");
 
-dbOpenReq.onerror = function (event) {
-    console.error("Database open request error: " + dbOpenReq.error);
+    dbOpenReq.onerror = function () {
+        console.error("Database open request error: " + dbOpenReq.error);
+    }
+
+    dbOpenReq.onsuccess = function () {
+        console.log("IndexedDB 'PubSuffList' successfully open");
+        getDBSuffList(dbOpenReq.result);
+    }
 }
 
-dbOpenReq.onsuccess = function (event) {
-    console.log("IndexedDB PubSuffList successfully open");
-    getDBSuffList(event.target.result);
+function openGenRulesDB(){
+    var dbOpenReq = window.indexedDB.open("GeneratorRules");
+
+    dbOpenReq.onerror = function () {
+        console.error("Database open request error: " + dbOpenReq.error);
+    }
+
+    dbOpenReq.onsuccess = function () {
+        console.log("IndexedDB 'GeneratorRules' successfully open");
+        genRulesDB = dbOpenReq.result;
+    }
 }
 
+
+openSuffListDB();
 loadPreferences();
+openGenRulesDB();
 
 in_inserted_pwd.addEventListener("change", generatePassword);
 

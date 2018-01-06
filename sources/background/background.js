@@ -1,4 +1,5 @@
 var suffListDB;
+var genRulesDB;
 var popupPort;
 
 var preferences = {
@@ -54,16 +55,16 @@ function updateSuffList() {
     }
 }
 
-function initDB() {
+function initSuffListDB() {
     var dbOpenReq = window.indexedDB.open("PubSuffList");
     var dbUpgraded = false;
 
     dbOpenReq.onerror = function (event) {
-        console.error("Database open request error: " + dbOpenReq.error);
+        console.error("Database 'PubSuffList' open request error: " + dbOpenReq.error);
     }
 
     dbOpenReq.onupgradeneeded = function (event) {
-        console.log("Upgrading DB version");
+        console.log("Upgrading DB 'PubSuffList' version");
         var db = dbOpenReq.result;
         db.createObjectStore("pubsufflist");
         db.createObjectStore("listversion");
@@ -87,6 +88,60 @@ function initDB() {
     }
 }
 
+function displayDataFromGenRulesDB(){
+    var transaction = genRulesDB.transaction(["rules"], "readwrite");
+    var objStore = transaction.objectStore("rules");
+    var index = objStore.index("domain");
+    var req = index.get("efg.com"); // zobrazi prvu domenu ktoru najde
+    var reqCursor = index.openCursor(); // cez kurzor sa mozem iterovat cez vsetky domeny v DB
+
+    req.onsuccess = function (){
+        console.log(req.result);
+    }
+
+    reqCursor.onsuccess = function() {
+        var cursor = reqCursor.result;
+        if(cursor) {
+            console.log(cursor);
+            cursor.continue();
+        } else {
+          console.log('Entries all displayed.');    
+        }
+      }
+}
+
+function putGenRulesToDB() {
+    var transaction = genRulesDB.transaction(["rules"], "readwrite");
+    var objStore = transaction.objectStore("rules");
+    objStore.put({domain: "efg.efg.com", pwdLength: 5, b64Enc: "true", hexEnc: "false", sld: "efg"}, "neviem2");
+}
+
+function initGenRulesDB() {
+    var dbOpenReq = window.indexedDB.open("GeneratorRules");
+
+    dbOpenReq.onerror = function (event) {
+        console.error("Database 'GeneratorRules' open request error: " + dbOpenReq.error);
+    }
+
+    dbOpenReq.onupgradeneeded = function (event) {
+        console.log("Upgrading DB 'GeneratorRules' version");
+        var db = dbOpenReq.result;
+        var objStore = db.createObjectStore("rules");
+        objStore.createIndex("domain", "domain");
+        objStore.createIndex("pwdLength", "pwdLength");
+        objStore.createIndex("b64Enc", "b64Enc");
+        objStore.createIndex("hexEnc", "hexEnc");
+        objStore.createIndex("sld", "sld");
+    }
+
+    dbOpenReq.onsuccess = function (event) {
+        console.log("IndexedDB 'GeneratorRules' successfully open");
+        genRulesDB = dbOpenReq.result;
+        // putGenRulesToDB();
+        // displayDataFromGenRulesDB();
+    }
+}
+
 function initPreferences(){
     var p = browser.storage.local.get();
     p.then(
@@ -107,7 +162,8 @@ function initPreferences(){
 
 //TODO: Pridat moznost nacitania SuffListu aj zo suboru v pripade, ze nebude fungovat list zo servera
 
-initDB();
+initSuffListDB();
+initGenRulesDB();
 initPreferences();
 
 

@@ -44,14 +44,41 @@ function updateUI(item) {
     in_time.value = item.time;
     cb_store.checked = item.store;
     cb_use_stored.checked = item.use_stored;
+
+    // Show Generator rules from GenRules DB
+    var dbOpenReq = window.indexedDB.open("GeneratorRules");
+
+    dbOpenReq.onerror = function () {
+        console.error("Database open request error: " + dbOpenReq.error);
+    }
+
+    dbOpenReq.onsuccess = function () {
+        console.log("IndexedDB 'GeneratorRules' successfully open");
+        var genRulesDB = dbOpenReq.result;
+
+        var transaction = genRulesDB.transaction(["rules"], "readonly");
+        var objStore = transaction.objectStore("rules");
+        var index = objStore.index("sld");
+        var reqCursor = index.openCursor();
+
+        reqCursor.onsuccess = function() {
+            var cursor = reqCursor.result;
+            if(cursor) {
+                insertNewTableEntry(cursor.value.domain, parseInt(cursor.value.pwdLength, 10), cursor.value.b64Enc == "true" , cursor.value.hexEnc == "true");
+                cursor.continue();
+            } else {
+              console.log('Entries all displayed.');    
+            }
+        }
+    }
 }
 
 function onError(err) {
     console.error(err);
 }
 
-function insertNewTableEntry(){
-    var table = document.getElementById("table_stored_settings");
+function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck){
+    var table = document.getElementById("table_stored_rules");
     var row = table.insertRow();
     var domainCell = row.insertCell();
     var pwdLengthCell = row.insertCell();
@@ -65,15 +92,14 @@ function insertNewTableEntry(){
     radioBase64.setAttribute("name", "encoding_row" + row.rowIndex);
     var radioHex = radioBase64.cloneNode(true);
 
-    domainCell.innerHTML = "example";
-    pwdLengthCell.innerHTML = row.rowIndex;
+    domainCell.innerHTML = domain;
+    pwdLengthCell.innerHTML = pwdLength;
+    radioBase64.checked = base64Check;
+    radioHex.checked = hexCheck;
     base64Cell.appendChild(radioBase64);
     hexCell.appendChild(radioHex);
 }
 
-for(var i = 0; i < 10; i++){
-    insertNewTableEntry();
-}
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
