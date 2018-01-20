@@ -1,8 +1,9 @@
 var in_tab_domain = document.getElementById("in_tab_domain");
+var in_tab_sld = document.getElementById("in_tab_sld");
 var in_inserted_pwd = document.getElementById("in_inserted_pwd");
 var in_generated_pwd = document.getElementById("in_generated_pwd");
-var tabDomain;  //Current tab domain (www.example.com)
-var tabSld;     //Current tab second level domain (example)
+//var tabDomain;  //Current tab domain (www.example.com) DELTE THIS VAR
+//var tabSld;     //Current tab second level domain (example) DELETE THIS VAR
 var suffListData;
 var genRulesDB;
 
@@ -28,14 +29,33 @@ function getSecondLvlDomain(domain) {
     return sld;
 }
 
+function isIpAddress(ip){
+    var ip = ip.split(".");
+    if (ip.length != 4){
+        return false;
+    }
+    for(var i = 0; i < 4; i++){
+        if (ip[i] < 0 || ip[i] > 255 || isNaN(ip[i])){
+            return false;
+        }
+    }
+    return true;
+}
+
 /* 
 Get current tab URL, call getSecondLvlDomain and write value to HTML input
 */
 function getCurrentTabDomain(tabs) {
     var urlWithoutProtocol = tabs[0].url.replace(/(^\w+:|^)\/\//, '');
-    tabDomain = urlWithoutProtocol.match(/[\w.-]+/)[0];
-    tabSld = getSecondLvlDomain(tabDomain);
-    in_tab_domain.value = tabSld; //cela domena, alebo len SLD?
+    var tabDomain = urlWithoutProtocol.match(/[\w.-]+/)[0];
+    in_tab_domain.value = tabDomain;
+
+    if(isIpAddress(tabDomain)){
+        in_tab_sld.value = tabDomain;
+    }
+    else{
+        in_tab_sld.value = getSecondLvlDomain(tabDomain);
+    }
 }
 
 function onError(err) {
@@ -65,38 +85,101 @@ function getDBSuffList(suffListDB) {
 function saveGenRule(){
     var transaction = genRulesDB.transaction(["rules"], "readwrite");
     var rulesObjStore = transaction.objectStore("rules");
-    rulesObjStore.put({ domain: tabDomain, 
+    rulesObjStore.put({ domain: in_tab_domain.value, 
                         pwdLength: preferences.length,
                         b64Enc: String(preferences.base64),
                         hexEnc: String(preferences.hex),
-                        sld: tabSld
-                      }, tabDomain)
+                        sld: in_tab_sld.value,
+                      }, in_tab_domain.value)
+}
+
+function getStoredDomainRules(domain){
+    var transaction = genRulesDB.transaction(["rules"], "readonly");
+    var rulesObjStore = transaction.objectStore("rules");
+    var index = rulesObjStore.index("domain");
+    var req = index.get(domain);
+
+    req.onsuccess = function(){
+        if (req.result != null){
+            console.log(req.result);
+        }
+        else{
+            console.log("Domain not found in DB");
+        }
+    }
+
+    req.onerror = function(){
+        console.error(req.result);
+    }
+}
+
+function hashNTimes(strToHash, b64Enc, hexEnc, N){
+    if (String(b64Enc) == "true" && String(hexEnc) == "false"){
+        var pwd = b64_sha512(strToHash);
+        for (let i = 1; i < N; i++){
+            pwd = b64_sha512(pwd);
+        }
+        return pwd;
+    }
+    else if (String(hexEnc) == "true" && String(b64Enc) == "false"){
+        var pwd = hex_sha512(strToHash);
+        for (let i = 1; i < N; i++){
+            pwd = hex_sha512(pwd);
+        }
+        return pwd;
+    }
 }
 
 function generatePassword(){
-    var pwdLength = preferences.length;
-    var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+    var transaction = genRulesDB.transaction(["rules"], "readonly");
+    var rulesObjStore = transaction.objectStore("rules");
+    var indexDomain = rulesObjStore.index("domain");
 
-    if (preferences.base64 == true && preferences.hex == false){
-        var pwd = b64_sha512(strToHash);
-        for (let i = 1; i < 1000; i++){
-            pwd = b64_sha512(pwd);
+    // ak ma generovat z ulozenych pravidiel
+    if(preferences.use_stored == true){
+        var req = indexDomain.get(in_tab_domain.value);
+        req.onsuccess = function(){
+            var storedRule = req.result;
+
+            // ak nasiel ulozenu domenu v DB
+            if (storedRule != null){
+                var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant; // zatial tam je DOMAIN NAME
+                var pwd = hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000);
+                in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+            }
+            // ak nenasiel, tak generuje s aktualnymi nastaveniami generatora
+            else{
+                console.log("Rule with domain name '" + in_tab_domain.value + "' is not found in DB");
+                console.log("Generating password with current generator preferences");
+                var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+                var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
+                in_generated_pwd.value = pwd.substring(0,preferences.length);
+
+                //Ulozenie nastaveni do DB
+                if (preferences.store == true){
+                    saveGenRule();
+                }
+            }
         }
-        in_generated_pwd.value = pwd.substring(0,pwdLength);
-    }
-    else if(preferences.hex == true && preferences.base64 == false){
-        var pwd = hex_sha512(strToHash);
-        for (let i = 1; i < 1000; i++){
-            pwd = hex_sha512(pwd);
+        req.onerror = function(){
+            console.error(req.result);
         }
-        in_generated_pwd.value = pwd.substring(0,pwdLength);
     }
 
-    //Ulozenie nastaveni do DB
-    if (preferences.store == true){
-        saveGenRule();
-    }
-    
+    // if (preferences.base64 == true && preferences.hex == false){
+    //     var pwd = b64_sha512(strToHash);
+    //     for (let i = 1; i < 1000; i++){
+    //         pwd = b64_sha512(pwd);
+    //     }
+    //     in_generated_pwd.value = pwd.substring(0,pwdLength);
+    // }
+    // else if(preferences.hex == true && preferences.base64 == false){
+    //     var pwd = hex_sha512(strToHash);
+    //     for (let i = 1; i < 1000; i++){
+    //         pwd = hex_sha512(pwd);
+    //     }
+    //     in_generated_pwd.value = pwd.substring(0,pwdLength);
+    // }
 }
 
 function loadPreferences(){
