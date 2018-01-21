@@ -6,6 +6,9 @@ var in_time = document.getElementById("in_time");
 
 var cb_store = document.getElementById("cb_store");
 var cb_use_stored = document.getElementById("cb_use_stored");
+var table = document.getElementById("table_stored_rules");
+
+var genRulesDB;
 
 
 /*
@@ -46,29 +49,18 @@ function updateUI(item) {
     cb_use_stored.checked = item.use_stored;
 
     // Show Generator rules from GenRules DB
-    var dbOpenReq = window.indexedDB.open("GeneratorRules");
+    var transaction = genRulesDB.transaction(["rules"], "readonly");
+    var objStore = transaction.objectStore("rules");
+    var index = objStore.index("sld");
+    var reqCursor = index.openCursor();
 
-    dbOpenReq.onerror = function () {
-        console.error("Database open request error: " + dbOpenReq.error);
-    }
-
-    dbOpenReq.onsuccess = function () {
-        console.log("IndexedDB 'GeneratorRules' successfully open");
-        var genRulesDB = dbOpenReq.result;
-
-        var transaction = genRulesDB.transaction(["rules"], "readonly");
-        var objStore = transaction.objectStore("rules");
-        var index = objStore.index("sld");
-        var reqCursor = index.openCursor();
-
-        reqCursor.onsuccess = function() {
-            var cursor = reqCursor.result;
-            if(cursor) {
-                insertNewTableEntry(cursor.value.domain, parseInt(cursor.value.pwdLength, 10), cursor.value.b64Enc == "true" , cursor.value.hexEnc == "true");
-                cursor.continue();
-            } else {
-              console.log('Entries all displayed.');    
-            }
+    reqCursor.onsuccess = function() {
+        var cursor = reqCursor.result;
+        if(cursor) {
+            insertNewTableEntry(cursor.value.domain, Number(cursor.value.pwdLength), cursor.value.b64Enc == "true" , cursor.value.hexEnc == "true", cursor.value.sld);
+            cursor.continue();
+        } else {
+            console.log('Entries all displayed.');    
         }
     }
 }
@@ -77,15 +69,32 @@ function onError(err) {
     console.error(err);
 }
 
-function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck){
-    var table = document.getElementById("table_stored_rules");
+function updateStoredRule(event){
+    var node = event.target;
+    while(node.nodeName != "TR"){   //preiterujem sa na riadok v tabulke, v ktorom nastala nejaka zmena
+        node = node.parentElement;
+    }
+    var transaction = genRulesDB.transaction(["rules"], "readwrite");
+    var rulesObjStore = transaction.objectStore("rules");
+    rulesObjStore.put({ domain: node.cells[0].innerHTML, 
+                        pwdLength: node.cells[1].innerHTML,
+                        b64Enc: String(node.cells[2].firstChild.checked),
+                        hexEnc: String(node.cells[3].firstChild.checked),
+                        sld: node.cells[4].innerHTML,
+                      }, node.cells[0].innerHTML)
+}
+
+function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, sld){
+    table = document.getElementById("table_stored_rules");
     var row = table.insertRow();
     var domainCell = row.insertCell();
     var pwdLengthCell = row.insertCell();
     var base64Cell = row.insertCell();
     var hexCell = row.insertCell();
+    var sldCell = row.insertCell();
 
     pwdLengthCell.contentEditable = "true";
+    sldCell.contentEditable = "true";
 
     var radioBase64 = document.createElement("input");
     radioBase64.setAttribute("type", "radio");
@@ -98,8 +107,24 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck){
     radioHex.checked = hexCheck;
     base64Cell.appendChild(radioBase64);
     hexCell.appendChild(radioHex);
+    sldCell.innerHTML = sld;
 }
 
+function openGenRulesDB(){
+    var dbOpenReq = window.indexedDB.open("GeneratorRules");
+
+    dbOpenReq.onerror = function () {
+        console.error("Database open request error: " + dbOpenReq.error);
+    }
+
+    dbOpenReq.onsuccess = function () {
+        console.log("IndexedDB 'GeneratorRules' successfully open");
+        genRulesDB = dbOpenReq.result;
+    }
+}
+
+openGenRulesDB();
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
+table.addEventListener("input", updateStoredRule);

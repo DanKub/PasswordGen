@@ -82,6 +82,8 @@ function getDBSuffList(suffListDB) {
     }
 }
 
+// Ulozim aktualne nastavenia generatora pre danu domenu do databazy ako nove pravidlo.
+// V pripade, ze sa tam uz pravidlo pre danu domenu nachadza, tak sa to len prepise.
 function saveGenRule(){
     var transaction = genRulesDB.transaction(["rules"], "readwrite");
     var rulesObjStore = transaction.objectStore("rules");
@@ -93,26 +95,7 @@ function saveGenRule(){
                       }, in_tab_domain.value)
 }
 
-function getStoredDomainRules(domain){
-    var transaction = genRulesDB.transaction(["rules"], "readonly");
-    var rulesObjStore = transaction.objectStore("rules");
-    var index = rulesObjStore.index("domain");
-    var req = index.get(domain);
-
-    req.onsuccess = function(){
-        if (req.result != null){
-            console.log(req.result);
-        }
-        else{
-            console.log("Domain not found in DB");
-        }
-    }
-
-    req.onerror = function(){
-        console.error(req.result);
-    }
-}
-
+// Vstupny retazec zahashujem N krat a vyplujem ho do pozadovaneho kodovania (B64/ENC)
 function hashNTimes(strToHash, b64Enc, hexEnc, N){
     if (String(b64Enc) == "true" && String(hexEnc) == "false"){
         var pwd = b64_sha512(strToHash);
@@ -130,58 +113,99 @@ function hashNTimes(strToHash, b64Enc, hexEnc, N){
     }
 }
 
+// Generovanie hesla
 function generatePassword(){
     var transaction = genRulesDB.transaction(["rules"], "readonly");
     var rulesObjStore = transaction.objectStore("rules");
     var indexDomain = rulesObjStore.index("domain");
 
-    // ak ma generovat z ulozenych pravidiel
-    if(preferences.use_stored == true){
+    // GENERUJ Z ULOZENYCH PRAVIDIEL A UKLADAJ PRAVIDLA
+    if(preferences.use_stored == true && preferences.store == true){
         var req = indexDomain.get(in_tab_domain.value);
         req.onsuccess = function(){
             var storedRule = req.result;
 
-            // ak nasiel ulozenu domenu v DB
+            // ak nasiel ulozenu domenu v DB tak vygeneruje heslo podla ulozeneho pravidla
             if (storedRule != null){
                 var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant; // zatial tam je DOMAIN NAME
                 var pwd = hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000);
                 in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
             }
-            // ak nenasiel, tak generuje s aktualnymi nastaveniami generatora
+            // ak nenasiel, tak generuje s aktualnymi nastaveniami generatora a nasledne ulozi tieto nastavenia ako nove pravidlo
             else{
-                console.log("Rule with domain name '" + in_tab_domain.value + "' is not found in DB");
+                console.log("Rule with domain name '" + in_tab_domain.value + "' was not found in DB");
                 console.log("Generating password with current generator preferences");
                 var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
                 var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
                 in_generated_pwd.value = pwd.substring(0,preferences.length);
 
                 //Ulozenie nastaveni do DB
-                if (preferences.store == true){
-                    saveGenRule();
-                }
+                saveGenRule();
             }
         }
         req.onerror = function(){
             console.error(req.result);
         }
     }
+    //GENERUJ Z ULOZENYCH PRAVIDIEL A NEUKLADAJ PRAVIDLA
+    else if(preferences.use_stored == true && preferences.store == false){
+        var req = indexDomain.get(in_tab_domain.value);
+        req.onsuccess = function(){
+            var storedRule = req.result;
 
-    // if (preferences.base64 == true && preferences.hex == false){
-    //     var pwd = b64_sha512(strToHash);
-    //     for (let i = 1; i < 1000; i++){
-    //         pwd = b64_sha512(pwd);
-    //     }
-    //     in_generated_pwd.value = pwd.substring(0,pwdLength);
-    // }
-    // else if(preferences.hex == true && preferences.base64 == false){
-    //     var pwd = hex_sha512(strToHash);
-    //     for (let i = 1; i < 1000; i++){
-    //         pwd = hex_sha512(pwd);
-    //     }
-    //     in_generated_pwd.value = pwd.substring(0,pwdLength);
-    // }
+            // ak nasiel ulozenu domenu v DB tak vygeneruje heslo podla ulozeneho pravidla
+            if (storedRule != null){
+                var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant; // zatial tam je DOMAIN NAME
+                var pwd = hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000);
+                in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+            }
+            // ak nenasiel tak musim upozornit pouzivatela. Zaroven nic negenerujem a ani neukladam.
+            else {
+                console.log("Rule with domain name '" + in_tab_domain.value + "' was not found in DB");
+                console.log("ZOBRAZENIE UPOZORNENIA!");
+            }
+        }
+        req.onerror = function(){
+            console.error(req.result);
+        }
+    }
+    //NEGENERUJ Z ULOZENYCH PRAVIDIEL A UKLADAJ PRAVIDLA
+    else if(preferences.use_stored == false && preferences.store == true){
+        var req = indexDomain.get(in_tab_domain.value);
+        req.onsuccess = function(){
+            var storedRule = req.result;
+
+            // ak nasiel ulozenu domenu v DB tak nechavam bez zmeny // ALEBO PREPISAT AKTUALNYMI NASTAVENIAMI? -skor asi to
+            if (storedRule != null){
+
+            }
+            // ak nenasiel ulozenu domenu, tak ju ulozim
+            else {
+                console.log("Rule with domain name '" + in_tab_domain.value + "' was not found in DB");
+                console.log("Saving rule for domain name '" + in_tab_domain.value + "' into DB");
+                saveGenRule();
+            }
+        }
+        req.onerror = function(){
+            console.error(req.result);
+        }
+
+        console.log("Generating password with current generator preferences");
+        var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+        var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
+        in_generated_pwd.value = pwd.substring(0,preferences.length);
+
+    }
+    //NEGENERUJ Z ULOZENYCH PRAVIDIEL A NEUKLADAJ PRAVIDLA
+    else if(preferences.use_stored == false && preferences.store == false){
+        console.log("Generating password with current generator preferences");
+        var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+        var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
+        in_generated_pwd.value = pwd.substring(0,preferences.length);
+    }
 }
 
+//Nacitanie nastaveni generatora
 function loadPreferences(){
     var p = browser.storage.local.get();
     p.then(onSuccess, onError);
