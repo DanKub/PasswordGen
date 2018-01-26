@@ -1,7 +1,13 @@
 var in_tab_domain = document.getElementById("in_tab_domain");
 var in_tab_sld = document.getElementById("in_tab_sld");
+var in_pwd_length = document.getElementById("in_pwd_length");
+var in_constant = document.getElementById("in_constant");
+var rb_base64 = document.getElementById("rb_base64");
+var rb_hex = document.getElementById("rb_hex");
 var in_inserted_pwd = document.getElementById("in_inserted_pwd");
 var in_generated_pwd = document.getElementById("in_generated_pwd");
+var div_gen_prefs = document.getElementById("div_gen_prefs");
+
 //var tabDomain;  //Current tab domain (www.example.com) DELTE THIS VAR
 //var tabSld;     //Current tab second level domain (example) DELETE THIS VAR
 var suffListData;
@@ -45,16 +51,76 @@ function isIpAddress(ip){
 /* 
 Get current tab URL, call getSecondLvlDomain and write value to HTML input
 */
-function getCurrentTabDomain(tabs) {
-    var urlWithoutProtocol = tabs[0].url.replace(/(^\w+:|^)\/\//, '');
-    var tabDomain = urlWithoutProtocol.match(/[\w.-]+/)[0];
-    in_tab_domain.value = tabDomain;
+function showUI(){
+    var tab_query = browser.tabs.query({ currentWindow: true, active: true });
+    tab_query.then(tabObtained, onError);
 
-    if(isIpAddress(tabDomain)){
-        in_tab_sld.value = tabDomain;
-    }
-    else{
-        in_tab_sld.value = getSecondLvlDomain(tabDomain);
+    function tabObtained(tabs){
+        var urlWithoutProtocol = tabs[0].url.replace(/(^\w+:|^)\/\//, '');
+        var tabDomain = urlWithoutProtocol.match(/[\w.-]+/)[0];
+        var tabSld;
+
+        if(isIpAddress(tabDomain)){
+            tabSld = tabDomain;
+        }
+        else{
+            tabSld = getSecondLvlDomain(tabDomain);
+        }
+
+        if(preferences.use_stored == true){
+            var transaction = genRulesDB.transaction(["rules"], "readonly");
+            var rulesObjStore = transaction.objectStore("rules");
+            var indexDomain = rulesObjStore.index("domain");
+            var reqDomain = indexDomain.get(tabDomain);
+
+            // Ked nahodou niekto zmeni SLD podla seba
+            if(in_tab_sld.value != ""){
+                tabSld = in_tab_sld.value;
+            }
+
+            reqDomain.onsuccess = function(){
+                var storedRuleDomain = reqDomain.result;
+
+                //Ak sa nachadza aktualna domena v DB, vypln inputy hodnotami z DB
+                if(storedRuleDomain != null){
+                    in_tab_domain.value = tabDomain;
+                    in_tab_sld.value = storedRuleDomain.sld;
+                }
+
+                //Inac skontroluj este ci sa nenachadza v DB nahodou SLD aktualnej domeny
+                else{
+                    var indexSld = rulesObjStore.index("sld");
+                    var reqSld = indexSld.get(tabSld);
+
+                    reqSld.onsuccess = function(){
+                        var storedRuleSld = reqSld.result;
+
+                        // Ak sa v DB nachadza SLD aktualnej domeny, tak vypln inputy a nastavenia generatora z ulozeneho pravidla z DB
+                        // Zobraz tieto inputy... to vsetko iba v pripade, ze na takuto neulozenu domenu sme natrafili 1. krat.
+                        if(storedRuleSld != null){
+                            in_tab_domain.value = tabDomain;
+                            in_tab_sld.value = tabSld;
+                            in_pwd_length.value = storedRuleSld.pwdLength;
+                            rb_base64.checked = (storedRuleSld.b64Enc == "true");
+                            rb_hex.checked = (storedRuleSld.hexEnc == "true");
+                            div_gen_prefs.hidden = false;
+
+                            temporarySavePreferences();
+                        }
+
+                        //Ak nie je v DB ulozene nic (ani domena ani SLD tejto domeny), vypln inputy podla aktualneho tabu
+                        else{
+                            in_tab_domain.value = tabDomain;
+                            in_tab_sld.value = tabSld;
+                        }
+                    }
+                }
+            }
+        }
+        else{
+            in_tab_domain.value = tabDomain;
+            in_tab_sld.value = tabSld;
+        }
     }
 }
 
@@ -64,7 +130,7 @@ function onError(err) {
 
 /*
 Load suffix list data from DB to  global variable suffListData.
-After that call getCurrentTabDomain function.
+After that call getCurrentTab function.
 */
 function getDBSuffList(suffListDB) {
     var transaction = suffListDB.transaction(["pubsufflist"], "readonly");
@@ -72,8 +138,7 @@ function getDBSuffList(suffListDB) {
 
     objStoreReq.onsuccess = function (event) {
         suffListData = objStoreReq.result;
-        var tab_query = browser.tabs.query({ currentWindow: true, active: true });
-        tab_query.then(getCurrentTabDomain, onError);
+        showUI();
     }
 
     objStoreReq.onerror = function (event) {
@@ -127,7 +192,7 @@ function generatePassword(){
 
             // ak nasiel ulozenu domenu v DB tak vygeneruje heslo podla ulozeneho pravidla
             if (storedRule != null){
-                var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant; // zatial tam je DOMAIN NAME
+                var strToHash = in_inserted_pwd.value + in_tab_sld.value + preferences.constant;
                 var pwd = hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000);
                 in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
             }
@@ -135,7 +200,7 @@ function generatePassword(){
             else{
                 console.log("Rule with domain name '" + in_tab_domain.value + "' was not found in DB");
                 console.log("Generating password with current generator preferences");
-                var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+                var strToHash = in_inserted_pwd.value + in_tab_sld.value + preferences.constant;
                 var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
                 in_generated_pwd.value = pwd.substring(0,preferences.length);
 
@@ -155,7 +220,7 @@ function generatePassword(){
 
             // ak nasiel ulozenu domenu v DB tak vygeneruje heslo podla ulozeneho pravidla
             if (storedRule != null){
-                var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant; // zatial tam je DOMAIN NAME
+                var strToHash = in_inserted_pwd.value + in_tab_sld.value + preferences.constant; // zatial tam je DOMAIN NAME
                 var pwd = hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000);
                 in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
             }
@@ -191,7 +256,7 @@ function generatePassword(){
         }
 
         console.log("Generating password with current generator preferences");
-        var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+        var strToHash = in_inserted_pwd.value + in_tab_sld.value + preferences.constant;
         var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
         in_generated_pwd.value = pwd.substring(0,preferences.length);
 
@@ -199,7 +264,7 @@ function generatePassword(){
     //NEGENERUJ Z ULOZENYCH PRAVIDIEL A NEUKLADAJ PRAVIDLA
     else if(preferences.use_stored == false && preferences.store == false){
         console.log("Generating password with current generator preferences");
-        var strToHash = in_inserted_pwd.value + in_tab_domain.value + preferences.constant;
+        var strToHash = in_inserted_pwd.value + in_tab_sld.value + preferences.constant;
         var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
         in_generated_pwd.value = pwd.substring(0,preferences.length);
     }
@@ -218,11 +283,22 @@ function loadPreferences(){
         preferences.time = item.time;
         preferences.store = item.store;
         preferences.use_stored = item.use_stored;
-    }
 
-    function onError(err){
-        console.error(err);
+        in_pwd_length.value = item.length;
+        in_constant.value = item.constant;
+        rb_base64.checked = item.base64;
+        rb_hex.checked = item.hex;
     }
+}
+
+/*
+Store preferences in variable while popup window is not closed
+*/
+function temporarySavePreferences() {
+    preferences.length = in_pwd_length.value;
+    preferences.constant = in_constant.value;
+    preferences.base64 = rb_base64.checked;
+    preferences.hex = rb_hex.checked;
 }
 
 // Open DB with Public Suffix List
@@ -249,15 +325,16 @@ function openGenRulesDB(){
     dbOpenReq.onsuccess = function () {
         console.log("IndexedDB 'GeneratorRules' successfully open");
         genRulesDB = dbOpenReq.result;
+        openSuffListDB();
     }
 }
 
-
-openSuffListDB();
-loadPreferences();
 openGenRulesDB();
+loadPreferences();
 
 in_inserted_pwd.addEventListener("change", generatePassword);
+div_gen_prefs.addEventListener("change", temporarySavePreferences);
+in_tab_sld.addEventListener("change", showUI);
 
 
 // var backgroundPort = browser.runtime.connect({name:"popup-port"}); //connect to backround.js
