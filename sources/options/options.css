@@ -55,3 +55,15 @@ p{
     background-color: #ffffff;
     text-align: center;
 }
+
+#table_stored_rules input {
+    text-align: center;
+    border-width:0px;
+    border:none;
+    width: 100%;
+}
+
+/* #table_stored_rules input[type="number"] {
+    -moz-appearance: textfield;
+    text-align: center;
+} */
