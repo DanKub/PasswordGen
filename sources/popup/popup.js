@@ -152,12 +152,33 @@ function getDBSuffList(suffListDB) {
 function saveGenRule(){
     var transaction = genRulesDB.transaction(["rules"], "readwrite");
     var rulesObjStore = transaction.objectStore("rules");
+    var indexSld = rulesObjStore.index("sld");
+    var reqSld = indexSld.get(in_tab_sld.value);
+
+    // Pozriem sa ci uz existuje zaznam s rovnakou SLD. 
+    reqSld.onsuccess = function(){
+        var storedRuleSld = reqSld.result;
+        // Ak ano, tak ten zaznam budem povazovat za rodica, pripisem mu aktualnu domenu ako dieta.
+        if(storedRuleSld != null){
+            if (storedRuleSld.childs == null){
+                storedRuleSld.childs = [];
+            }
+            storedRuleSld.childs.push(in_tab_domain.value);
+            rulesObjStore.put({ domain: storedRuleSld.domain, 
+                                pwdLength: storedRuleSld.pwdLength,
+                                b64Enc: storedRuleSld.b64Enc,
+                                hexEnc: storedRuleSld.hexEnc,
+                                sld: storedRuleSld.sld,
+                                childs: storedRuleSld.childs,
+                              }, storedRuleSld.domain);
+        }
+    }
     rulesObjStore.put({ domain: in_tab_domain.value, 
                         pwdLength: preferences.length,
                         b64Enc: String(preferences.base64),
                         hexEnc: String(preferences.hex),
                         sld: in_tab_sld.value,
-                      }, in_tab_domain.value)
+                      }, in_tab_domain.value);
 }
 
 // Vstupny retazec zahashujem N krat a vyplujem ho do pozadovaneho kodovania (B64/ENC)

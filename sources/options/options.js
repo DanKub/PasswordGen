@@ -48,12 +48,21 @@ function updateUI(item) {
     cb_store.checked = item.store;
     cb_use_stored.checked = item.use_stored;
 
+    loadTableRules();
+}
+
+function onError(err) {
+    console.error(err);
+}
+
+function loadTableRules(){
     // Show Generator rules from GenRules DB
     var transaction = genRulesDB.transaction(["rules"], "readonly");
     var objStore = transaction.objectStore("rules");
     var index = objStore.index("sld");
     var reqCursor = index.openCursor();
 
+    deleteTableRules();
     reqCursor.onsuccess = function() {
         var cursor = reqCursor.result;
         if(cursor) {
@@ -64,9 +73,11 @@ function updateUI(item) {
         }
     }
 }
-
-function onError(err) {
-    console.error(err);
+ //TODO: UPDATE TABLE RULES BY DOMAN NAME
+function deleteTableRules(){
+    for (var i = table.rows.length - 1; i > 0; i--){
+        table.deleteRow(i);
+    }
 }
 
 function validatePwdLen(pwdLen){
@@ -100,16 +111,48 @@ function updateStoredRule(event){
 
     var transaction = genRulesDB.transaction(["rules"], "readwrite");
     var rulesObjStore = transaction.objectStore("rules");
-    rulesObjStore.put({ domain: node.cells[0].firstChild.value, 
-                        pwdLength: node.cells[1].firstChild.value,
-                        b64Enc: String(node.cells[2].firstChild.checked),
-                        hexEnc: String(node.cells[3].firstChild.checked),
-                        sld: node.cells[4].firstChild.value,
-                      }, node.cells[0].firstChild.value)
+    var indexDomain = rulesObjStore.index("domain");
+
+    var reqDomain = indexDomain.get(node.cells[0].firstChild.value);
+    reqDomain.onsuccess = function(){
+        var storedRule = reqDomain.result;
+
+        //Ak zaznam ktory idem menit nema deti, tak zmenim iba dany zaznam
+        if (storedRule.childs == null){
+            rulesObjStore.put({ domain: node.cells[0].firstChild.value, 
+                                pwdLength: node.cells[1].firstChild.value,
+                                b64Enc: String(node.cells[2].firstChild.checked),
+                                hexEnc: String(node.cells[3].firstChild.checked),
+                                sld: node.cells[4].firstChild.value,
+                                }, node.cells[0].firstChild.value);
+        }
+
+        // Zaznam ktory idem menit ma deti. Treba ich vsetky zmenit podla rodica (aktualneho zaznamu).
+        else {
+            // Zmena aktualneho zaznamu, ktory user zmenil cez GUI
+            rulesObjStore.put({ domain: node.cells[0].firstChild.value, 
+                                pwdLength: node.cells[1].firstChild.value,
+                                b64Enc: String(node.cells[2].firstChild.checked),
+                                hexEnc: String(node.cells[3].firstChild.checked),
+                                sld: node.cells[4].firstChild.value,
+                                childs: storedRule.childs,
+                                }, node.cells[0].firstChild.value);
+
+            // Zmena detskych zaznamov v DB
+            for (var i = 0; i < storedRule.childs.length; i++){
+                rulesObjStore.put({ domain: storedRule.childs[i], 
+                                    pwdLength: node.cells[1].firstChild.value,
+                                    b64Enc: String(node.cells[2].firstChild.checked),
+                                    hexEnc: String(node.cells[3].firstChild.checked),
+                                    sld: node.cells[4].firstChild.value,
+                                    }, storedRule.childs[i]);
+            }
+            loadTableRules();
+        }
+    }
 }
 
 function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, sld){
-    table = document.getElementById("table_stored_rules");
     var row = table.insertRow();
     var domainCell = row.insertCell();
     var pwdLengthCell = row.insertCell();

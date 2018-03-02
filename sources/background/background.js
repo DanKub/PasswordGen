@@ -132,6 +132,7 @@ function initGenRulesDB() {
         objStore.createIndex("b64Enc", "b64Enc");
         objStore.createIndex("hexEnc", "hexEnc");
         objStore.createIndex("sld", "sld");
+        objStore.createIndex("childs", "childs");
     }
 
     dbOpenReq.onsuccess = function (event) {
