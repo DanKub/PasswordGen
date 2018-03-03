@@ -59,14 +59,14 @@ function loadTableRules(){
     // Show Generator rules from GenRules DB
     var transaction = genRulesDB.transaction(["rules"], "readonly");
     var objStore = transaction.objectStore("rules");
-    var index = objStore.index("sld");
+    var index = objStore.index("pdl");
     var reqCursor = index.openCursor();
 
     deleteTableRules();
     reqCursor.onsuccess = function() {
         var cursor = reqCursor.result;
         if(cursor) {
-            insertNewTableEntry(cursor.value.domain, Number(cursor.value.pwdLength), cursor.value.b64Enc == "true" , cursor.value.hexEnc == "true", cursor.value.sld);
+            insertNewTableEntry(cursor.value.domain, Number(cursor.value.pwdLength), cursor.value.b64Enc == "true" , cursor.value.hexEnc == "true", cursor.value.pdl);
             cursor.continue();
         } else {
             console.log('Entries all displayed.');    
@@ -91,13 +91,13 @@ function validatePwdLen(pwdLen){
     return pwdLen;
 }
 
-function validateSld(sld){
+function validatePdl(pdl){
     // Odstranim vsetky nevalidne znaky a zo zaciatku bodku alebo cislo
-    sld = sld.replace(/[^A-Za-z0-9.]/g, "");
-    if(sld.charAt(0).match(/[.\d]/)){
-        sld = sld.slice(1);
+    pdl = pdl.replace(/[^A-Za-z0-9.]/g, "");
+    if(pdl.charAt(0).match(/[.\d]/)){
+        pdl = pdl.slice(1);
     }
-    return sld;
+    return pdl;
 }
 
 function updateStoredRule(event){
@@ -107,7 +107,7 @@ function updateStoredRule(event){
     }
 
     node.cells[1].firstChild.value = validatePwdLen(node.cells[1].firstChild.value);
-    node.cells[4].firstChild.value = validateSld(node.cells[4].firstChild.value);
+    node.cells[4].firstChild.value = validatePdl(node.cells[4].firstChild.value);
 
     var transaction = genRulesDB.transaction(["rules"], "readwrite");
     var rulesObjStore = transaction.objectStore("rules");
@@ -123,7 +123,7 @@ function updateStoredRule(event){
                                 pwdLength: node.cells[1].firstChild.value,
                                 b64Enc: String(node.cells[2].firstChild.checked),
                                 hexEnc: String(node.cells[3].firstChild.checked),
-                                sld: node.cells[4].firstChild.value,
+                                pdl: node.cells[4].firstChild.value,
                                 }, node.cells[0].firstChild.value);
         }
 
@@ -134,7 +134,7 @@ function updateStoredRule(event){
                                 pwdLength: node.cells[1].firstChild.value,
                                 b64Enc: String(node.cells[2].firstChild.checked),
                                 hexEnc: String(node.cells[3].firstChild.checked),
-                                sld: node.cells[4].firstChild.value,
+                                pdl: node.cells[4].firstChild.value,
                                 childs: storedRule.childs,
                                 }, node.cells[0].firstChild.value);
 
@@ -144,7 +144,7 @@ function updateStoredRule(event){
                                     pwdLength: node.cells[1].firstChild.value,
                                     b64Enc: String(node.cells[2].firstChild.checked),
                                     hexEnc: String(node.cells[3].firstChild.checked),
-                                    sld: node.cells[4].firstChild.value,
+                                    pdl: node.cells[4].firstChild.value,
                                     }, storedRule.childs[i]);
             }
             loadTableRules();
@@ -152,16 +152,16 @@ function updateStoredRule(event){
     }
 }
 
-function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, sld){
+function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl){
     var row = table.insertRow();
     var domainCell = row.insertCell();
     var pwdLengthCell = row.insertCell();
     var base64Cell = row.insertCell();
     var hexCell = row.insertCell();
-    var sldCell = row.insertCell();
+    var pdlCell = row.insertCell();
 
     // pwdLengthCell.contentEditable = "true";
-    // sldCell.contentEditable = "true";
+    // pdlCell.contentEditable = "true";
 
     var radioBase64Input = document.createElement("input");
     radioBase64Input.setAttribute("type", "radio");
@@ -171,7 +171,7 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, sld){
     var domainCellInput = document.createElement("input");
     domainCellInput.type = "text";
     domainCellInput.pattern = "([[a-z0-9]+\.)*[a-z0-9]+\.[a-z0-9]+";
-    var sldCellInput = domainCellInput.cloneNode(true);
+    var pdlCellInput = domainCellInput.cloneNode(true);
     domainCellInput.readOnly = true;
 
     var pwdLengthCellInput = document.createElement("input");
@@ -181,13 +181,13 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, sld){
     pwdLengthCellInput.value = pwdLength;
     radioBase64Input.checked = base64Check;
     radioHexInput.checked = hexCheck;
-    sldCellInput.value = sld;
+    pdlCellInput.value = pdl;
 
     domainCell.appendChild(domainCellInput);
     pwdLengthCell.appendChild(pwdLengthCellInput);
     base64Cell.appendChild(radioBase64Input);
     hexCell.appendChild(radioHexInput);
-    sldCell.appendChild(sldCellInput);
+    pdlCell.appendChild(pdlCellInput);
 }
 
 function openGenRulesDB(){

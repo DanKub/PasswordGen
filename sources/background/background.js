@@ -131,7 +131,8 @@ function initGenRulesDB() {
         objStore.createIndex("pwdLength", "pwdLength");
         objStore.createIndex("b64Enc", "b64Enc");
         objStore.createIndex("hexEnc", "hexEnc");
-        objStore.createIndex("sld", "sld");
+        objStore.createIndex("pdl", "pdl");
+        // objStore.createIndex("parentDomainLvl", "parentDomainLvl");
         objStore.createIndex("childs", "childs");
     }
 
