@@ -100,6 +100,19 @@ function validatePdl(pdl){
     return pdl;
 }
 
+function updateUIChildRules(ruleChilds, parentNode){
+    for (var i = 0; i < ruleChilds.length; i++){
+        for (var j = 1; j < table.rows.length; j++){
+            if (table.rows[j].children[0].firstChild.value == ruleChilds[i]){
+                table.rows[j].children[1].firstChild.value = parentNode.cells[1].firstChild.value;
+                table.rows[j].children[2].firstChild.checked = parentNode.cells[2].firstChild.checked;
+                table.rows[j].children[3].firstChild.checked = parentNode.cells[3].firstChild.checked;
+            }
+        }
+    }
+}
+
+
 function updateStoredRule(event){
     var node = event.target;
     while(node.nodeName != "TR"){   //preiterujem sa na riadok v tabulke, v ktorom nastala nejaka zmena
@@ -138,6 +151,8 @@ function updateStoredRule(event){
                                 childs: storedRule.childs,
                                 }, node.cells[0].firstChild.value);
 
+            updateUIChildRules(storedRule.childs, node); // zmena detskych zaznamov v tabulke GUI
+
             // Zmena detskych zaznamov v DB
             for (var i = 0; i < storedRule.childs.length; i++){
                 rulesObjStore.put({ domain: storedRule.childs[i], 
@@ -147,7 +162,6 @@ function updateStoredRule(event){
                                     pdl: node.cells[4].firstChild.value,
                                     }, storedRule.childs[i]);
             }
-            loadTableRules();
         }
     }
 }
