@@ -130,19 +130,63 @@ function updateStoredRule(event){
     reqDomain.onsuccess = function(){
         var storedRule = reqDomain.result;
 
-        //Ak zaznam ktory idem menit nema deti, tak zmenim iba dany zaznam
+        //Ak zaznam ktory idem menit nema deti
         if (storedRule.childs == null){
-            rulesObjStore.put({ domain: node.cells[0].firstChild.value, 
-                                pwdLength: node.cells[1].firstChild.value,
-                                b64Enc: String(node.cells[2].firstChild.checked),
-                                hexEnc: String(node.cells[3].firstChild.checked),
-                                pdl: node.cells[4].firstChild.value,
-                                }, node.cells[0].firstChild.value);
+            //Ak nema deti a ma rodica, tak zmenim iba dany (detsky) zaznam a oddelim ho od hlavneho stromu ako novy strom
+            if(storedRule.parent){
+                rulesObjStore.put({ domain: node.cells[0].firstChild.value, 
+                                    pwdLength: node.cells[1].firstChild.value,
+                                    b64Enc: String(node.cells[2].firstChild.checked),
+                                    hexEnc: String(node.cells[3].firstChild.checked),
+                                    pdl: node.cells[0].firstChild.value, // zmena pdl na domain name -> takto vznikne novy strom
+                                    }, node.cells[0].firstChild.value);
+
+                node.cells[4].firstChild.value = node.cells[0].firstChild.value; // prepisem pld zaznam v UI
+
+                // Odstranenie zaznamu od rodica (nakolko zo zmeneneho zaznamu je teraz samostatny strom)
+                // vyziadam si jeho rodica a odstranim ho odtial
+                var reqParentDomain = indexDomain.get(storedRule.parent);
+                reqParentDomain.onsuccess = function(){
+                    var storedParentRule = reqParentDomain.result;
+                    var parentChilds = storedParentRule.childs;
+                    parentChilds.splice(parentChilds.indexOf(storedRule.domain), 1);
+    
+                    // Ak rodic po vymazani childa obsahuje este ine deti
+                    if(storedParentRule.childs.length > 0){
+                        rulesObjStore.put({ domain: storedParentRule.domain, 
+                                            pwdLength: storedParentRule.pwdLength,
+                                            b64Enc: storedParentRule.b64Enc,
+                                            hexEnc: storedParentRule.hexEnc,
+                                            pdl: storedParentRule.pdl,
+                                            childs: storedParentRule.childs,
+                                            }, storedParentRule.domain);
+                    }
+                    // Ak to bol posledny detsky zaznam, tak vymaz property 'childs'
+                    else{
+                        rulesObjStore.put({ domain: storedParentRule.domain, 
+                                            pwdLength: storedParentRule.pwdLength,
+                                            b64Enc: storedParentRule.b64Enc,
+                                            hexEnc: storedParentRule.hexEnc,
+                                            pdl: storedParentRule.pdl,
+                                            }, storedParentRule.domain);
+                    }
+                }
+            }
+
+            //Ak zaznam, ktory idem menit nema deti ani rodica
+            else{
+                rulesObjStore.put({ domain: node.cells[0].firstChild.value, 
+                                    pwdLength: node.cells[1].firstChild.value,
+                                    b64Enc: String(node.cells[2].firstChild.checked),
+                                    hexEnc: String(node.cells[3].firstChild.checked),
+                                    pdl: node.cells[4].firstChild.value,
+                                    }, node.cells[0].firstChild.value);
+            }
         }
 
         // Zaznam ktory idem menit ma deti. Treba ich vsetky zmenit podla rodica (aktualneho zaznamu).
         else {
-            // Zmena aktualneho zaznamu, ktory user zmenil cez GUI
+            // Zmena aktualneho (rodicovskeho) zaznamu, ktory user zmenil cez GUI
             rulesObjStore.put({ domain: node.cells[0].firstChild.value, 
                                 pwdLength: node.cells[1].firstChild.value,
                                 b64Enc: String(node.cells[2].firstChild.checked),
@@ -160,6 +204,7 @@ function updateStoredRule(event){
                                     b64Enc: String(node.cells[2].firstChild.checked),
                                     hexEnc: String(node.cells[3].firstChild.checked),
                                     pdl: node.cells[4].firstChild.value,
+                                    parent: storedRule.domain,
                                     }, storedRule.childs[i]);
             }
         }

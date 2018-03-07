@@ -180,6 +180,7 @@ function saveGenRule(){
     // Pozriem sa na vsetky existujuce zaznamy s rovnakou PDL. 
     reqPdl.onsuccess = function(){
         var storedRulePdl = reqPdl.result;
+        var parentDomain;
 
         // Ak je ulozeny aspon 1, tak ten zaznam budem povazovat za rodica, pripisem mu aktualnu domenu ako dieta.
         // Zaroven to bude zaznam vzdy ako posledny. Preto length-1.
@@ -189,6 +190,7 @@ function saveGenRule(){
             }
             for (var i = 0; i < storedRulePdl.length; i++){
                 if(storedRulePdl[i].childs != null){
+                    parentDomain = storedRulePdl[i].domain;
                     storedRulePdl[i].childs.push(in_tab_domain.value);
                     rulesObjStore.put({ domain: storedRulePdl[i].domain, 
                                         pwdLength: storedRulePdl[i].pwdLength,
@@ -200,13 +202,14 @@ function saveGenRule(){
                 }
             }
         }
+        rulesObjStore.put({ domain: in_tab_domain.value, 
+            pwdLength: preferences.length,
+            b64Enc: String(preferences.base64),
+            hexEnc: String(preferences.hex),
+            pdl: in_tab_pdl.value,
+            parent: parentDomain,
+          }, in_tab_domain.value);
     }
-    rulesObjStore.put({ domain: in_tab_domain.value, 
-                        pwdLength: preferences.length,
-                        b64Enc: String(preferences.base64),
-                        hexEnc: String(preferences.hex),
-                        pdl: in_tab_pdl.value,
-                      }, in_tab_domain.value);
 }
 
 // Vstupny retazec zahashujem N krat a vyplujem ho do pozadovaneho kodovania (B64/ENC)
