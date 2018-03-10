@@ -184,7 +184,7 @@ function updateStoredRule(event){
             }
         }
 
-        // Zaznam ktory idem menit ma deti. Treba ich vsetky zmenit podla rodica (aktualneho zaznamu).
+        // Zaznam ktory idem menit MA DETI. Treba ich vsetky zmenit podla rodica (aktualneho zaznamu).
         else {
             // Zmena aktualneho (rodicovskeho) zaznamu, ktory user zmenil cez GUI
             rulesObjStore.put({ domain: node.cells[0].firstChild.value, 

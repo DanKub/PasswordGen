@@ -180,17 +180,29 @@ function saveGenRule(){
     // Pozriem sa na vsetky existujuce zaznamy s rovnakou PDL. 
     reqPdl.onsuccess = function(){
         var storedRulePdl = reqPdl.result;
-        var parentDomain;
+        var parentObject;
+        var replaceParent = false;
 
         // Ak je ulozeny aspon 1, tak ten zaznam budem povazovat za rodica, pripisem mu aktualnu domenu ako dieta.
-        // Zaroven to bude zaznam vzdy ako posledny. Preto length-1.
         if(storedRulePdl.length > 0){
             if (storedRulePdl.length == 1 && storedRulePdl[0].childs == null){
                 storedRulePdl[0].childs = [];
             }
+            //Najdem si rodica
             for (var i = 0; i < storedRulePdl.length; i++){
                 if(storedRulePdl[i].childs != null){
-                    parentDomain = storedRulePdl[i].domain;
+                    parentObject = storedRulePdl[i];
+                    // ak aktualna domena je suffixom uz nejakej ulozenej (ma subdomeny z hladiska DNS), tak sa z nej dalej stane rodic a zdedi vsetky decka od povodneho rodica
+                    publicSuffixList.parse(suffListData, punycode.toASCII);
+                    var publicSuffix = publicSuffixList.getPublicSuffix(in_tab_domain.value);
+                    var tabDomainWoSuffix = in_tab_domain.value.substr(0, in_tab_domain.value.indexOf(publicSuffix) - 1);
+                    publicSuffix = publicSuffixList.getPublicSuffix(parentObject.domain);
+                    var parentDomainWoSuffix = parentObject.domain.substr(0, parentObject.domain.indexOf(publicSuffix) - 1);
+                    if(parentDomainWoSuffix.endsWith(("." + tabDomainWoSuffix))){
+                        replaceParent = true;
+                        break;
+                    }
+                    // Rodicovi pridam aktualnu domenu ako dieta
                     storedRulePdl[i].childs.push(in_tab_domain.value);
                     rulesObjStore.put({ domain: storedRulePdl[i].domain, 
                                         pwdLength: storedRulePdl[i].pwdLength,
@@ -201,14 +213,47 @@ function saveGenRule(){
                                     }, storedRulePdl[i].domain);
                 }
             }
+            // Dietatu pridam 
+            if(replaceParent == false){
+                rulesObjStore.put({ domain: in_tab_domain.value, 
+                    pwdLength: preferences.length,
+                    b64Enc: String(preferences.base64),
+                    hexEnc: String(preferences.hex),
+                    pdl: in_tab_pdl.value,
+                    parent: parentObject.domain,
+                  }, in_tab_domain.value);
+            }
         }
-        rulesObjStore.put({ domain: in_tab_domain.value, 
-            pwdLength: preferences.length,
-            b64Enc: String(preferences.base64),
-            hexEnc: String(preferences.hex),
-            pdl: in_tab_pdl.value,
-            parent: parentDomain,
-          }, in_tab_domain.value);
+        // Ak nie je ulozeny ziadny zaznam s rovnakou PDL, tak nerobim, ziadne specialne zmeny. Zaznam nebude ani rodic ani dieta.
+        else{
+            rulesObjStore.put({ domain: in_tab_domain.value, 
+                pwdLength: preferences.length,
+                b64Enc: String(preferences.base64),
+                hexEnc: String(preferences.hex),
+                pdl: in_tab_pdl.value,
+              }, in_tab_domain.value);
+        }
+        
+        if(replaceParent){
+            parentObject.childs.push(parentObject.domain);  // V povodnom rodicovskom objekte pridam do zoznamu deti samotnu rodicovsku domenu (kedze sa z nej stane dieta)
+            rulesObjStore.put({ domain: in_tab_domain.value, 
+                pwdLength: preferences.length,
+                b64Enc: String(preferences.base64),
+                hexEnc: String(preferences.hex),
+                pdl: in_tab_pdl.value,
+                childs: parentObject.childs,
+              }, in_tab_domain.value);
+
+            for (var i = 0; i < parentObject.childs.length; i++){ //vsetkym detom prepisem povodneho rodica na noveho rodica
+                rulesObjStore.put({ domain: parentObject.childs[i], 
+                    pwdLength: preferences.length,
+                    b64Enc: String(preferences.base64),
+                    hexEnc: String(preferences.hex),
+                    pdl: in_tab_pdl.value,
+                    parent: in_tab_domain.value,
+                    }, parentObject.childs[i]);
+            }
+        }
     }
 }
 
