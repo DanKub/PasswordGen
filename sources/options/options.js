@@ -7,8 +7,14 @@ var in_time = document.getElementById("in_time");
 var cb_store = document.getElementById("cb_store");
 var cb_use_stored = document.getElementById("cb_use_stored");
 var table = document.getElementById("table_stored_rules");
+var btn_export = document.getElementById("btn_export");
+var btn_import = document.getElementById("btn_import");
+var in_import = document.getElementById("in_import");
 
 var genRulesDB;
+
+var minPwdLen = 1;
+var maxPwdLen = 64;
 
 
 /*
@@ -321,6 +327,8 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isCh
         domainCell.setAttribute("class", "children");
     }
 
+    delIconCell.setAttribute("style", "text-align: center;");
+
     var pdlCellInput = document.createElement("input");
     pdlCellInput.type = "text";
     pdlCellInput.pattern = "([[a-z0-9]+\.)*[a-z0-9]+\.[a-z0-9]+";
@@ -359,8 +367,175 @@ function openGenRulesDB(){
     }
 }
 
+function exportSettings(){
+    var retrievePrefs = browser.storage.local.get(); // Ziskaj lokalne ulozene nastavenia generatora
+    retrievePrefs.then(
+        function(preferences){
+            var exportObject = {};
+            exportObject.preferences = preferences; // Do objektu, kt. sa bude exportovat vloz ziskane nastavenia
+
+            var transaction = genRulesDB.transaction(["rules"], "readonly");
+            var objStore = transaction.objectStore("rules");
+            var index = objStore.index("domain");
+            var reqAllRules = index.getAll();
+
+            reqAllRules.onsuccess = function(){
+                exportObject.rules = reqAllRules.result;    // Do objektu, kt. sa bude exportovat vloz vsetky ziskane pravidla z DB
+                var blob = new Blob([JSON.stringify(exportObject, null, 4)], {type : 'application/json'});
+                var url = URL.createObjectURL(blob);
+                var downloading = browser.downloads.download(
+                    {
+                        url: url,
+                        filename: "passgen_settings.json",
+                        incognito: true,
+                        saveAs: true
+                    }
+                );
+                downloading.then(null, onError);
+            }
+        }, onError);
+}
+
+function importSettings(){
+    var file = in_import.files[0];
+    var maxFileSize = 10; // Max file size in MB
+
+    if (file == null){
+        return;
+    }
+
+    if(file.type != "application/json"){
+        alert("Selected file is not JSON");
+        return;
+    }
+
+    if(file.size > (maxFileSize*1024*1024)){
+        alert("Selected file is too large");
+        return;
+    }
+
+    var reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function(event){
+
+        if(isValidJson(event.target.result)){
+            var importObj = JSON.parse(event.target.result);
+
+            browser.storage.local.set(importObj.preferences); // nacitanie nastaveni z importovaneho objektu
+
+            var transaction = genRulesDB.transaction(["rules"], "readwrite");
+            var objStore = transaction.objectStore("rules");
+            var clearReq = objStore.clear();
+            clearReq.onsuccess = function(){
+
+                // Nacitanie vsetkych pravidiel do DB z importovaneho objektu
+                for(var i = 0; i < importObj.rules.length; i++){
+                    objStore.put(importObj.rules[i], importObj.rules[i].domain).onerror = function(err){
+                        console.error(err)
+                    }
+                }
+                updateUI(importObj.preferences);
+                in_import.value = null;
+            }
+        }
+        else{
+            return;
+        }
+    }
+}
+
+function isValidJson(data){
+    try {
+        var obj = JSON.parse(data);
+
+        // Check Generator Preferences validity
+        if (obj.preferences.length == undefined ||
+            obj.preferences.constant == undefined ||
+            obj.preferences.base64 == undefined ||
+            obj.preferences.hex == undefined ||
+            obj.preferences.time == undefined ||
+            obj.preferences.store == undefined ||
+            obj.preferences.use_stored == undefined){
+            alert("Invalid Preference Name");
+            return false;
+        }
+        if (typeof(obj.preferences.length) != "string" ||
+            typeof(obj.preferences.constant) != "string" ||
+            typeof(obj.preferences.base64) != "boolean" ||
+            typeof(obj.preferences.hex) != "boolean" ||
+            typeof(obj.preferences.time) != "string" ||
+            typeof(obj.preferences.store) != "boolean" ||
+            typeof(obj.preferences.use_stored) != "boolean"){
+            alert("Invalid Preference Type");
+            return false;
+            }
+        if(!obj.preferences.length.match(/^[0-9]+$/)){
+            alert("Invalid PDWLEN value " + obj.preferences.length);
+            return false;
+        }
+        if(parseInt(obj.preferences.length, 10) < minPwdLen || parseInt(obj.preferences.length, 10) > maxPwdLen){
+            alert("Invalid PDWLEN value " + obj.preferences.length);
+            return false;
+        }
+        if(!obj.preferences.time.match(/^[0-9]+$/)){
+            alert("Invalid Time value " + obj.preferences.time);
+            return false;
+        }
+        if(parseInt(obj.preferences.time, 10) < 0 || parseInt(obj.preferences.time, 10) > 60){
+            alert("Invalid Time value " + obj.preferences.time);
+            return false;
+        }
+        if(obj.preferences.constant.length > 100){
+            alert("Invalid Constant length");
+            return false;
+        }
+
+        // Check Stored Rules Validity
+        for (var i = 0; i < obj.rules.length; i++){
+            if (obj.rules[i].domain == undefined ||
+                obj.rules[i].pwdLength == undefined ||
+                obj.rules[i].b64Enc == undefined ||
+                obj.rules[i].hexEnc == undefined ||
+                obj.rules[i].pdl == undefined){
+                alert("InvalidJSON");
+                return false;
+                }
+            if (obj.rules[i].domain == null ||
+                obj.rules[i].pwdLength == null ||
+                obj.rules[i].b64Enc == null ||
+                obj.rules[i].hexEnc == null ||
+                obj.rules[i].pdl == null) {
+                alert('invalidJSON');
+                return false;
+            }
+            if (!obj.rules[i].pwdLength.match(/^[0-9]+$/)) {
+                alert("Invalid PWDLEN value" + obj.rules[i].pwdLength);
+                return false;
+            }
+            if (parseInt(obj.rules[i].pwdLength, 10) < minPwdLen || parseInt(obj.rules[i].pwdLength, 10) > maxPwdLen) {
+                alert('Invalid PWDLEN value' + obj.rules[i].pwdLength);
+                return false;
+            }
+            if (!(obj.rules[i].b64Enc == "true" || obj.rules[i].b64Enc == "false")) {
+                alert("Ivalid b64 encoding");
+                return false;
+            }
+            if (!(obj.rules[i].hexEnc == "true" || obj.rules[i].hexEnc == "false")) {
+                alert("invalid HEX encoding");
+                return false;
+            }
+        }
+    } catch (error) {
+        alert("Invalid JSON");
+        return false;
+    }
+    return true;
+}
+
 openGenRulesDB();
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
 table.addEventListener("input", updateStoredRule);
+btn_export.addEventListener("click", exportSettings);
+btn_import.addEventListener("click", importSettings);

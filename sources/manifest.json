@@ -24,6 +24,7 @@
     "permissions":[
         "storage",
         "tabs",
+        "downloads",
         "https://publicsuffix.org/list/public_suffix_list.dat"
     ], 
 
