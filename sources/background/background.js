@@ -141,6 +141,34 @@ function initGenRulesDB() {
         genRulesDB = dbOpenReq.result;
         // putGenRulesToDB();
         // displayDataFromGenRulesDB();
+
+        // var transaction = genRulesDB.transaction(["rules"], "readwrite");
+        // var objStore = transaction.objectStore("rules");
+        // var index = objStore.index("domain");
+        // var reqAllRules = index.getAll(); // ziskam vsetky pravidla z DB
+        // reqAllRules.onsuccess = () => {
+        //     console.log('PT_DATA: ',reqAllRules.result);
+        //     var jsonObj = JSON.stringify(reqAllRules.result); // pravidla zoserializujem pomocou JSON z objektu do stringu
+        //     encryptText(jsonObj, "heslo").then(encryptedObj => {    // zasifrujeme to
+        //         var encryptedString = ab2str(encryptedObj.encBuffer);
+        //         var transaction = genRulesDB.transaction(["rules"], "readwrite");
+        //         var objStore = transaction.objectStore("rules");
+        //         var jsonIV = JSON.stringify(encryptedObj.iv);
+        //         var base64IV = btoa(jsonIV);   // IV zakodujeme pomocou Base64
+        //         objStore.put(encryptedString, base64IV).onsuccess = () => { // ulozim zasifrovane data do DB pod klucom IV
+        //             var transaction = genRulesDB.transaction(["rules"], "readwrite");
+        //             var objStore = transaction.objectStore("rules");
+        //             var reqEncryptedRule = objStore.get(base64IV); // ziskam zasifrovane data z DB na zaklade IV
+        //             reqEncryptedRule.onsuccess = () => {
+        //                 console.log('CT_DATA: ',reqEncryptedRule.result);
+        //                 var objIV = JSON.parse(atob(base64IV));  // deserializujem zakodovany IV -> vznikne mi obycajny Object, ktory potom treba hodit to Uint8Array
+        //                 decryptText(str2ab(encryptedString), new Uint8Array(Object.values(objIV)), "heslo").then(decryptedObject => {
+        //                     console.log(JSON.parse(decryptedObject));
+        //                 });
+        //             }
+        //         }
+        //     });
+        // }
     }
 }
 
@@ -168,6 +196,107 @@ initSuffListDB();
 initGenRulesDB();
 initPreferences();
 
+// async function hex_sha512(message) {
+
+//     // encode as UTF-8
+//     const msgBuffer = new TextEncoder('utf-8').encode(message);
+
+//     // hash the message
+//     const hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
+    
+//     // convert ArrayBuffer to Array
+//     const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+//     // convert bytes to hex string
+//     const hashHex = hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('');
+
+//     // return hashHex;
+//     return hashHex;
+// }
+
+// async function b64_sha512(message) {
+
+//     // encode as UTF-8
+//     const msgBuffer = new TextEncoder('utf-8').encode(message);
+
+//     // hash the message
+//     const hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
+    
+//     // convert ArrayBuffer to Array
+//     const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+//     // convert bytes to base64
+//     const hashB64 = btoa(String.fromCharCode.apply(null, new Uint8Array(hashBuffer)));
+
+//     // return hashHex;
+//     return hashB64;
+// }
+
+// hex_sha512('a').then(hash => console.log(hash));
+// b64_sha512('a').then(hash => console.log(hash));
+
+
+// function cakajnaB(){
+//     return new Promise(resolve => {
+//         setTimeout(()=>{console.log('b'); resolve();}, 2000);
+//     });
+// }
+
+// async function haha(){
+//     console.log("a");
+//     await cakajnaB();
+//     console.log("c");
+// }
+// haha();
+
+const encryptText = async (plainText, password) => {
+    const ptUtf8 = new TextEncoder().encode(plainText);
+  
+    const pwUtf8 = new TextEncoder().encode(password);
+    const pwHash = await crypto.subtle.digest('SHA-256', pwUtf8); 
+  
+    const iv = crypto.getRandomValues(new Uint8Array(16));
+    const alg = { name: 'AES-CBC', iv: iv };
+    const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ['encrypt']);
+  
+    return { iv, encBuffer: await crypto.subtle.encrypt(alg, key, ptUtf8) };
+}
+
+const decryptText = async (ctBuffer, iv, password) => {
+    const pwUtf8 = new TextEncoder().encode(password);
+    const pwHash = await crypto.subtle.digest('SHA-256', pwUtf8);
+
+    const alg = { name: 'AES-CBC', iv: iv };
+    const key = await crypto.subtle.importKey('raw', pwHash, alg, false, ['decrypt']);
+
+    const ptBuffer = await crypto.subtle.decrypt(alg, key, ctBuffer);
+
+    const plaintext = new TextDecoder().decode(ptBuffer);
+
+    return plaintext;
+}
+
+function ab2str(buf) {
+    return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+
+function str2ab(str) {
+    var buf = new ArrayBuffer(str.length * 2); // 2 bytes for each char
+    var bufView = new Uint16Array(buf);
+    for (var i = 0, strLen = str.length; i < strLen; i++) {
+      bufView[i] = str.charCodeAt(i);
+    }
+    return buf;
+}
+
+// encryptText("abcd", "heslo").then(encryptedObj => {
+//     console.log(encryptedObj);
+//     var encryptedString = ab2str(encryptedObj.encBuffer);
+//     console.log(encryptedString);
+//     decryptText(str2ab(encryptedString), encryptedObj.iv, "heslo").then(decryptedObj => {
+//         console.log(decryptedObj);
+//     }, rejection => console.error(rejection));
+// }, rejection => console.error(rejection));
 
 
 
