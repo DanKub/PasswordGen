@@ -1,13 +1,9 @@
 var in_tab_domain = document.getElementById("in_tab_domain");
 var in_tab_pdl = document.getElementById("in_tab_pdl");
 var in_pdl_datalist = document.getElementById("pdl_datalist");
-var in_pwd_length = document.getElementById("in_pwd_length");
-var in_constant = document.getElementById("in_constant");
-var rb_base64 = document.getElementById("rb_base64");
-var rb_hex = document.getElementById("rb_hex");
 var in_inserted_pwd = document.getElementById("in_inserted_pwd");
 var in_generated_pwd = document.getElementById("in_generated_pwd");
-var div_gen_prefs = document.getElementById("div_gen_prefs");
+var div_description = document.getElementById("div_description");
 
 //var tabDomain;  //Current tab domain (www.example.com) DELTE THIS VAR
 //var tabPdl;     //Current tab second level domain (example) DELETE THIS VAR
@@ -91,11 +87,6 @@ function showUI(){
             var indexDomain = rulesObjStore.index("domain");
             var reqDomain = indexDomain.get(tabDomain);
 
-            // Ked nahodou niekto zmeni PDL podla seba
-            if(in_tab_pdl.value != ""){
-                tabPdl = in_tab_pdl.value;
-            }
-
             reqDomain.onsuccess = function(){
                 var storedRuleDomain = reqDomain.result;
 
@@ -103,6 +94,20 @@ function showUI(){
                 if(storedRuleDomain != null){
                     in_tab_domain.value = tabDomain;
                     in_tab_pdl.value = storedRuleDomain.pdl;
+                    in_tab_pdl.readOnly = true;
+
+                    // Hlaska pre B64 kodovanie
+                    if(storedRuleDomain.b64Enc == "true"){
+                        div_description.innerHTML = "<p>Na zaklade ulozeneho pravidla pre domenu <b>" +
+                        storedRuleDomain.domain + " </b> sa vygeneruje heslo dlhe <b>" + storedRuleDomain.pwdLength + " </b> znakov\
+                        v <b>Base-64</b> kodovani.";
+                    }
+                    //Hlaska pre HEX kodovanie
+                    else if(storedRuleDomain.hexEnc == "true"){
+                        div_description.innerHTML = "<p>Na zaklade ulozeneho pravidla pre domenu <b>" +
+                        storedRuleDomain.domain + " </b> sa vygeneruje heslo dlhe <b>" + storedRuleDomain.pwdLength + " </b> znakov\
+                        v <b>HEX</b> kodovani.";
+                    }
                     createParentDomainsList();
                 }
 
@@ -113,18 +118,23 @@ function showUI(){
 
                     reqPdl.onsuccess = function(){
                         var storedRulePdl = reqPdl.result;
+                        in_tab_domain.value = tabDomain;
+                        in_tab_pdl.value = tabPdl;
 
                         // Ak sa v DB nachadza PDL aktualnej domeny, tak vypln inputy a nastavenia generatora z ulozeneho pravidla z DB
                         // Zobraz tieto inputy... to vsetko iba v pripade, ze na takuto neulozenu domenu sme natrafili 1. krat.
                         if(storedRulePdl != null){
-                            in_tab_domain.value = tabDomain;
-                            in_tab_pdl.value = tabPdl;
-                            in_pwd_length.value = storedRulePdl.pwdLength;
-                            rb_base64.checked = (storedRulePdl.b64Enc == "true");
-                            rb_hex.checked = (storedRulePdl.hexEnc == "true");
-                            div_gen_prefs.hidden = false;
-
-                            temporarySavePreferences();
+                            if(storedRulePdl.b64Enc == "true"){
+                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
+                                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
+                                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>Base-64</b> kodovani."
+                            }
+                            else if(storedRulePdl.hexEnc == "true"){
+                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
+                                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
+                                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>HEX</b> kodovani."
+                            }
+                            temporarySavePreferences(storedRulePdl.pwdLength, storedRulePdl.b64Enc == "true", storedRulePdl.hexEnc == "true");
                             createParentDomainsList();
                         }
 
@@ -132,6 +142,16 @@ function showUI(){
                         else{
                             in_tab_domain.value = tabDomain;
                             in_tab_pdl.value = tabPdl;
+                            if(preferences.base64 == true){
+                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
+                                podla aktualnych nastaveni generatora.<br>\
+                                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>Base-64</b> kodovani."
+                            }
+                            else if(preferences.hex == true){
+                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
+                                podla aktualnych nastaveni generatora.<br>\
+                                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>HEX</b> kodovani."
+                            }
                             createParentDomainsList();
                         }
                     }
@@ -141,10 +161,77 @@ function showUI(){
         else{
             in_tab_domain.value = tabDomain;
             in_tab_pdl.value = tabPdl;
+
+            if(preferences.base64 == true){
+                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
+                podla aktualnych nastaveni generatora.<br>\
+                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>Base-64</b> kodovani."
+            }
+            else if(preferences.hex == true){
+                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
+                podla aktualnych nastaveni generatora.<br>\
+                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>HEX</b> kodovani."
+            }
             createParentDomainsList();
         }
     }
 }
+
+function onChangeInPdl(event){
+    var changedPdl = event.target.value;
+    var transaction = genRulesDB.transaction(["rules"], "readonly");
+    var rulesObjStore = transaction.objectStore("rules");
+    var indexPdl = rulesObjStore.index("pdl");
+    var reqPdl = indexPdl.get(changedPdl);
+
+    reqPdl.onsuccess = function(){
+        var storedRulePdl = reqPdl.result;
+
+        // Ak sa v DB nachadza PDL aktualnej domeny...
+        if(storedRulePdl != null){
+            if(storedRulePdl.b64Enc == "true"){
+                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
+                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
+                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>Base-64</b> kodovani."
+            }
+            else if(storedRulePdl.hexEnc == "true"){
+                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
+                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
+                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>HEX</b> kodovani."
+            }
+            temporarySavePreferences(storedRulePdl.pwdLength, storedRulePdl.b64Enc == "true", storedRulePdl.hexEnc == "true");
+        }
+
+        //Ak nie je v DB ulozene nic (ani domena ani PDL tejto domeny)
+        else{
+            // Nacitat temporary pravidla (od zaciatku nacitania stranky mohli byt zmenene)
+            var p = browser.storage.local.get();
+            p.then(
+                item => {
+                    preferences.length = item.length;
+                    preferences.constant = item.constant;
+                    preferences.base64 = item.base64;
+                    preferences.hex = item.hex;
+                    preferences.time = item.time;
+                    preferences.store = item.store;
+                    preferences.use_stored = item.use_stored;
+
+                    if(preferences.base64 == true){
+                        div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
+                        podla aktualnych nastaveni generatora.<br>\
+                        Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>Base-64</b> kodovani."
+                    }
+                    else if(preferences.hex == true){
+                        div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
+                        podla aktualnych nastaveni generatora.<br>\
+                        Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>HEX</b> kodovani."
+                    }
+                }
+            );
+        }
+    }
+}
+
 
 function onError(err) {
     console.error(err);
@@ -420,22 +507,16 @@ function loadPreferences(){
         preferences.time = item.time;
         preferences.store = item.store;
         preferences.use_stored = item.use_stored;
-
-        in_pwd_length.value = item.length;
-        in_constant.value = item.constant;
-        rb_base64.checked = item.base64;
-        rb_hex.checked = item.hex;
     }
 }
 
 /*
 Store preferences in variable while popup window is not closed
 */
-function temporarySavePreferences() {
-    preferences.length = in_pwd_length.value;
-    preferences.constant = in_constant.value;
-    preferences.base64 = rb_base64.checked;
-    preferences.hex = rb_hex.checked;
+function temporarySavePreferences(pwdLength, base64, hex) {
+    preferences.length = pwdLength;
+    preferences.base64 = base64;
+    preferences.hex = hex;
 }
 
 // Open DB with Public Suffix List
@@ -470,12 +551,4 @@ openGenRulesDB();
 loadPreferences();
 
 in_inserted_pwd.addEventListener("change", generatePassword);
-div_gen_prefs.addEventListener("change", temporarySavePreferences);
-// in_tab_pdl.addEventListener("change", showUI);
-
-
-// var backgroundPort = browser.runtime.connect({name:"popup-port"}); //connect to backround.js
-
-// backgroundPort.onMessage.addListener(function(m) {
-//   console.log(m);
-// });
+in_tab_pdl.addEventListener("change", onChangeInPdl);

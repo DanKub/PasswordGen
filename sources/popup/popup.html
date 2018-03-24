@@ -6,11 +6,12 @@
     <meta charset="utf-8">
 </head>
 
-<body>
+<body style="width:245px">
+    <div id="div_description"></div>
     <div>
         <strong>Domain:</strong>
         <br>
-        <input type="text" id="in_tab_domain">
+        <input type="text" id="in_tab_domain" readonly>
     </div>
     <div>
         <strong>Parent domain level:</strong>
@@ -18,24 +19,6 @@
         <input type="text" id="in_tab_pdl", list="pdl_datalist">
         <datalist id="pdl_datalist"></datalist>
     </div>
-
-    <div id="div_gen_prefs" hidden>
-        <p>Generator properties</p>
-        <div>
-            <label>Password length:</label>
-            <input type="number" id="in_pwd_length" class="number" min="1" max="64">
-        </div>
-        <div>
-            <label>Constant:</label>
-            <input type="text" id="in_constant">
-        </div>
-        <div>
-            <label>Encoding:</label>
-            <input type="radio" id="rb_base64" name="encoding" value="base-64" , checked> Base-64
-            <input type="radio" id="rb_hex" name="encoding" value="hex"> HEX
-        </div>
-    </div>
-
     <div>
         <strong>Password:</strong>
         <br>
