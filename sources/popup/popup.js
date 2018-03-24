@@ -257,26 +257,61 @@ function saveGenRule(){
     }
 }
 
-// Vstupny retazec zahashujem N krat a vyplujem ho do pozadovaneho kodovania (B64/ENC)
-function hashNTimes(strToHash, b64Enc, hexEnc, N){
-    if (String(b64Enc) == "true" && String(hexEnc) == "false"){
-        var pwd = b64_sha512(strToHash);
-        for (let i = 1; i < N; i++){
-            pwd = b64_sha512(pwd);
-        }
-        return pwd;
-    }
-    else if (String(hexEnc) == "true" && String(b64Enc) == "false"){
-        var pwd = hex_sha512(strToHash);
-        for (let i = 1; i < N; i++){
-            pwd = hex_sha512(pwd);
-        }
-        return pwd;
-    }
-}
-
 // Generovanie hesla
 function generatePassword(){
+    // Vstupny retazec zahashujem N krat a vyplujem ho do pozadovaneho kodovania (B64/ENC)
+    async function hashNTimes(strToHash, b64Enc, hexEnc, N){
+        if (String(b64Enc) == "true" && String(hexEnc) == "false"){
+            const pwd = await b64_sha512(strToHash, N);
+            return pwd;
+        }
+        else if (String(hexEnc) == "true" && String(b64Enc) == "false"){
+            const pwd = await hex_sha512(strToHash, N);
+            return pwd;
+        }
+    }
+
+    async function hex_sha512(message, N) {
+        // encode as UTF-8
+        const msgBuffer = new TextEncoder('utf-8').encode(message);
+    
+        // hash the message N times
+        var hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
+        for (let i = 1; i < N; i++){
+            hashBuffer = await crypto.subtle.digest('SHA-512', hashBuffer);
+        }
+        
+        // convert ArrayBuffer to Array
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+    
+        // convert bytes to hex string
+        const hashHex = hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('');
+    
+        // return hashHex;
+        return hashHex;
+    }
+    
+    async function b64_sha512(message, N) {
+        // encode as UTF-8
+        const msgBuffer = new TextEncoder('utf-8').encode(message);
+    
+        // hash the message N times
+        var hashBuffer = await crypto.subtle.digest('SHA-512', msgBuffer);
+        
+        for (let i = 1; i < N; i++){
+            hashBuffer = await crypto.subtle.digest('SHA-512', hashBuffer);
+        }
+    
+        // convert ArrayBuffer to Array
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+    
+        // convert bytes to base64
+        const hashB64 = btoa(String.fromCharCode.apply(null, new Uint8Array(hashBuffer)));
+    
+        // return hashHex;
+        return hashB64;
+    }
+
     var transaction = genRulesDB.transaction(["rules"], "readonly");
     var rulesObjStore = transaction.objectStore("rules");
     var indexDomain = rulesObjStore.index("domain");
@@ -290,16 +325,18 @@ function generatePassword(){
             // ak nasiel ulozenu domenu v DB tak vygeneruje heslo podla ulozeneho pravidla
             if (storedRule != null){
                 var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
-                var pwd = hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000);
-                in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+                hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000).then( pwd => {
+                    in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+                });
             }
             // ak nenasiel, tak generuje s aktualnymi nastaveniami generatora a nasledne ulozi tieto nastavenia ako nove pravidlo
             else{
                 console.log("Rule with domain name '" + in_tab_domain.value + "' was not found in DB");
                 console.log("Generating password with current generator preferences");
                 var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
-                var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
-                in_generated_pwd.value = pwd.substring(0,preferences.length);
+                hashNTimes(strToHash, preferences.base64, preferences.hex, 1000).then( pwd => {
+                    in_generated_pwd.value = pwd.substring(0,preferences.length);
+                });
 
                 //Ulozenie nastaveni do DB
                 saveGenRule();
@@ -318,8 +355,9 @@ function generatePassword(){
             // ak nasiel ulozenu domenu v DB tak vygeneruje heslo podla ulozeneho pravidla
             if (storedRule != null){
                 var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant; // zatial tam je DOMAIN NAME
-                var pwd = hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000);
-                in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+                hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000).then( pwd => {
+                    in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+                });
             }
             // ak nenasiel tak musim upozornit pouzivatela. Zaroven nic negenerujem a ani neukladam.
             else {
@@ -354,16 +392,18 @@ function generatePassword(){
 
         console.log("Generating password with current generator preferences");
         var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
-        var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
-        in_generated_pwd.value = pwd.substring(0,preferences.length);
+        hashNTimes(strToHash, preferences.base64, preferences.hex, 1000).then( pwd => {
+            in_generated_pwd.value = pwd.substring(0,preferences.length);
+        });
 
     }
     //NEGENERUJ Z ULOZENYCH PRAVIDIEL A NEUKLADAJ PRAVIDLA
     else if(preferences.use_stored == false && preferences.store == false){
         console.log("Generating password with current generator preferences");
         var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
-        var pwd = hashNTimes(strToHash, preferences.base64, preferences.hex, 1000);
-        in_generated_pwd.value = pwd.substring(0,preferences.length);
+        hashNTimes(strToHash, preferences.base64, preferences.hex, 1000).then( pwd => {
+            in_generated_pwd.value = pwd.substring(0,preferences.length);
+        });
     }
 }
 
