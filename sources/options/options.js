@@ -6,9 +6,9 @@ var in_time = document.getElementById("in_time");
 
 var cb_store = document.getElementById("cb_store");
 var cb_use_stored = document.getElementById("cb_use_stored");
+var btn_del_all_rules = document.getElementById("btn_del_all_rules");
 var table = document.getElementById("table_stored_rules");
 var btn_export = document.getElementById("btn_export");
-var btn_import = document.getElementById("btn_import");
 var in_import = document.getElementById("in_import");
 
 var genRulesDB;
@@ -306,6 +306,13 @@ function deleteStoredRule(event){
     }
 }
 
+function deleteAllStoredRules(){
+    deleteTableRules();
+    var transaction = genRulesDB.transaction(["rules"], "readwrite");
+    var rulesObjStore = transaction.objectStore("rules");
+    rulesObjStore.clear();
+}
+
 function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isChild){
     var row = table.insertRow();
     var domainCell = row.insertCell();
@@ -341,7 +348,7 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isCh
     delIcon.innerText = "delete";
     delIcon.addEventListener("click", deleteStoredRule);
 
-    domainCell.innerHTML = domain;
+    domainCell.textContent = domain;
     pwdLengthCellInput.value = pwdLength;
     radioBase64Input.checked = base64Check;
     radioHexInput.checked = hexCheck;
@@ -383,15 +390,28 @@ function exportSettings(){
                 exportObject.rules = reqAllRules.result;    // Do objektu, kt. sa bude exportovat vloz vsetky ziskane pravidla z DB
                 var blob = new Blob([JSON.stringify(exportObject, null, 4)], {type : 'application/json'});
                 var url = URL.createObjectURL(blob);
-                var downloading = browser.downloads.download(
-                    {
-                        url: url,
-                        filename: "passgen_settings.json",
-                        incognito: true,
-                        saveAs: true
+                browser.runtime.getPlatformInfo().then(info => {
+                    var downloading;
+                    if (info.os == "android"){
+                        downloading = browser.downloads.download(
+                            {
+                                url: url,
+                                filename: "passgen_settings.json",
+                            }
+                        );
                     }
-                );
-                downloading.then(null, onError);
+                    else{
+                        downloading = browser.downloads.download(
+                            {
+                                url: url,
+                                filename: "passgen_settings.json",
+                                incognito: true,
+                                saveAs: true
+                            }
+                        );
+                    }
+                    downloading.then(null, onError);
+                });
             }
         }, onError);
 }
@@ -538,4 +558,5 @@ document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
 table.addEventListener("input", updateStoredRule);
 btn_export.addEventListener("click", exportSettings);
-btn_import.addEventListener("click", importSettings);
+in_import.addEventListener("change", importSettings);
+btn_del_all_rules.addEventListener("click", deleteAllStoredRules);

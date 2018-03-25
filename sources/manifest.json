@@ -10,6 +10,12 @@
         "64": "icons/active-64.png"
     },
 
+    "applications": {
+        "gecko": {
+            "id": "{53d88a5a-eba8-41c1-8b2e-99426d24f547}"
+        }
+    },
+
     "browser_action": {
         "browser_style": true,
         "default_icon": "icons/active-64.png",
@@ -25,6 +31,7 @@
         "storage",
         "tabs",
         "downloads",
+        "clipboardWrite",
         "https://publicsuffix.org/list/public_suffix_list.dat"
     ], 
 
