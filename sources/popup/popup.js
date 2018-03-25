@@ -4,6 +4,7 @@ var in_pdl_datalist = document.getElementById("pdl_datalist");
 var in_inserted_pwd = document.getElementById("in_inserted_pwd");
 var in_generated_pwd = document.getElementById("in_generated_pwd");
 var div_description = document.getElementById("div_description");
+var p_description = document.getElementById("p_description");
 
 //var tabDomain;  //Current tab domain (www.example.com) DELTE THIS VAR
 //var tabPdl;     //Current tab second level domain (example) DELETE THIS VAR
@@ -96,18 +97,28 @@ function showUI(){
                     in_tab_pdl.value = storedRuleDomain.pdl;
                     in_tab_pdl.readOnly = true;
 
-                    // Hlaska pre B64 kodovanie
+                    p_description.insertAdjacentText("beforeend", "Na zaklade ulozeneho pravidla pre domenu ");
+
+                    var b = document.createElement("b");
+                    b.innerText = storedRuleDomain.domain;
+                    p_description.insertAdjacentElement("beforeend", b);
+                    p_description.insertAdjacentText("beforeend", " sa vygeneruje heslo dlhe ");
+
+                    b = document.createElement("b");
+                    b.innerText = storedRuleDomain.pwdLength;
+                    p_description.insertAdjacentElement("beforeend", b);
+                    p_description.insertAdjacentText("beforeend", " znakov v ");
+
+                    b = document.createElement("b");
                     if(storedRuleDomain.b64Enc == "true"){
-                        div_description.innerHTML = "<p>Na zaklade ulozeneho pravidla pre domenu <b>" +
-                        storedRuleDomain.domain + " </b> sa vygeneruje heslo dlhe <b>" + storedRuleDomain.pwdLength + " </b> znakov\
-                        v <b>Base-64</b> kodovani.";
+                        b.innerText = "Base-64";
                     }
-                    //Hlaska pre HEX kodovanie
                     else if(storedRuleDomain.hexEnc == "true"){
-                        div_description.innerHTML = "<p>Na zaklade ulozeneho pravidla pre domenu <b>" +
-                        storedRuleDomain.domain + " </b> sa vygeneruje heslo dlhe <b>" + storedRuleDomain.pwdLength + " </b> znakov\
-                        v <b>HEX</b> kodovani.";
+                        b.innerText = "HEX";
                     }
+                    p_description.insertAdjacentElement("beforeend", b);
+                    p_description.insertAdjacentText("beforeend", " kodovani.");
+
                     createParentDomainsList();
                 }
 
@@ -124,16 +135,40 @@ function showUI(){
                         // Ak sa v DB nachadza PDL aktualnej domeny, tak vypln inputy a nastavenia generatora z ulozeneho pravidla z DB
                         // Zobraz tieto inputy... to vsetko iba v pripade, ze na takuto neulozenu domenu sme natrafili 1. krat.
                         if(storedRulePdl != null){
+
+                            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+
+                            var b = document.createElement("b");
+                            b.innerText = in_tab_domain.value;
+                            p_description.insertAdjacentElement("beforeend", b);
+                            p_description.insertAdjacentText("beforeend", " heslo s rovnakymi nastaveniami ake sa pouzivaju pre vsetky ");
+        
+                            b = document.createElement("b");
+                            b.innerText = "*." + storedRulePdl.pdl;
+                            p_description.insertAdjacentElement("beforeend", b);
+                            p_description.insertAdjacentText("beforeend", " subdomeny.");
+
+                            var br = document.createElement("br");
+                            p_description.insertAdjacentElement("beforeend", br);
+
+                            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+
+                            b = document.createElement("b");
+                            b.innerText = storedRulePdl.pwdLength;
+                            p_description.insertAdjacentElement("beforeend", b);
+                            p_description.insertAdjacentText("beforeend", " znakov v ");
+        
+                            b = document.createElement("b");
                             if(storedRulePdl.b64Enc == "true"){
-                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
-                                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
-                                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>Base-64</b> kodovani."
+                                b.innerText = "Base-64";
                             }
                             else if(storedRulePdl.hexEnc == "true"){
-                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
-                                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
-                                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>HEX</b> kodovani."
+                                b.innerText = "HEX";
                             }
+                            p_description.insertAdjacentElement("beforeend", b);
+                            p_description.insertAdjacentText("beforeend", " kodovani.");
+
+
                             temporarySavePreferences(storedRulePdl.pwdLength, storedRulePdl.b64Enc == "true", storedRulePdl.hexEnc == "true");
                             createParentDomainsList();
                         }
@@ -142,16 +177,35 @@ function showUI(){
                         else{
                             in_tab_domain.value = tabDomain;
                             in_tab_pdl.value = tabPdl;
+
+                            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+
+                            var b = document.createElement("b");
+                            b.innerText = in_tab_domain.value;
+                            p_description.insertAdjacentElement("beforeend", b);
+                            p_description.insertAdjacentText("beforeend", " heslo podla aktualnych nastaveni generatora.");
+
+                            var br = document.createElement("br");
+                            p_description.insertAdjacentElement("beforeend", br);
+
+                            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+
+                            b = document.createElement("b");
+                            b.innerText = preferences.length;
+                            p_description.insertAdjacentElement("beforeend", b);
+                            p_description.insertAdjacentText("beforeend", " znakov v ");
+        
+                            b = document.createElement("b");
                             if(preferences.base64 == true){
-                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
-                                podla aktualnych nastaveni generatora.<br>\
-                                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>Base-64</b> kodovani."
+                                b.innerText = "Base-64";
                             }
                             else if(preferences.hex == true){
-                                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
-                                podla aktualnych nastaveni generatora.<br>\
-                                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>HEX</b> kodovani."
+                                b.innerText = "HEX";
                             }
+                            p_description.insertAdjacentElement("beforeend", b);
+                            p_description.insertAdjacentText("beforeend", " kodovani.");
+
+
                             createParentDomainsList();
                         }
                     }
@@ -162,16 +216,34 @@ function showUI(){
             in_tab_domain.value = tabDomain;
             in_tab_pdl.value = tabPdl;
 
+            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+
+            var b = document.createElement("b");
+            b.innerText = in_tab_domain.value;
+            p_description.insertAdjacentElement("beforeend", b);
+            p_description.insertAdjacentText("beforeend", " heslo podla aktualnych nastaveni generatora.");
+
+            var br = document.createElement("br");
+            p_description.insertAdjacentElement("beforeend", br);
+
+            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+
+            b = document.createElement("b");
+            b.innerText = preferences.length;
+            p_description.insertAdjacentElement("beforeend", b);
+            p_description.insertAdjacentText("beforeend", " znakov v ");
+
+            b = document.createElement("b");
             if(preferences.base64 == true){
-                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
-                podla aktualnych nastaveni generatora.<br>\
-                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>Base-64</b> kodovani."
+                b.innerText = "Base-64";
             }
             else if(preferences.hex == true){
-                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
-                podla aktualnych nastaveni generatora.<br>\
-                Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>HEX</b> kodovani."
+                b.innerText = "HEX";
             }
+            p_description.insertAdjacentElement("beforeend", b);
+            p_description.insertAdjacentText("beforeend", " kodovani.");
+
+
             createParentDomainsList();
         }
     }
@@ -189,16 +261,43 @@ function onChangeInPdl(event){
 
         // Ak sa v DB nachadza PDL aktualnej domeny...
         if(storedRulePdl != null){
+            div_description.children[0].remove();
+            var p_description = document.createElement("p");
+            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+
+            var b = document.createElement("b");
+            b.innerText = in_tab_domain.value;
+            p_description.insertAdjacentElement("beforeend", b);
+            p_description.insertAdjacentText("beforeend", " heslo s rovnakymi nastaveniami ake sa pouzivaju pre vsetky ");
+
+            b = document.createElement("b");
+            b.innerText = "*." + storedRulePdl.pdl;
+            p_description.insertAdjacentElement("beforeend", b);
+            p_description.insertAdjacentText("beforeend", " subdomeny.");
+
+            var br = document.createElement("br");
+            p_description.insertAdjacentElement("beforeend", br);
+
+            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+
+            b = document.createElement("b");
+            b.innerText = storedRulePdl.pwdLength;
+            p_description.insertAdjacentElement("beforeend", b);
+            p_description.insertAdjacentText("beforeend", " znakov v ");
+
+            b = document.createElement("b");
             if(storedRulePdl.b64Enc == "true"){
-                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
-                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
-                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>Base-64</b> kodovani."
+                b.innerText = "Base-64";
             }
             else if(storedRulePdl.hexEnc == "true"){
-                div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo s rovnakymi\
-                nastaveniami ake sa pouzivaju pre vsetky <b>*." + storedRulePdl.pdl + " </b> subdomeny.<br>\
-                Heslo bude dlhe <b> " + storedRulePdl.pwdLength + "</b> znakov v <b>HEX</b> kodovani."
+                b.innerText = "HEX";
             }
+            p_description.insertAdjacentElement("beforeend", b);
+            p_description.insertAdjacentText("beforeend", " kodovani.");
+
+            div_description.appendChild(p_description);
+
+
             temporarySavePreferences(storedRulePdl.pwdLength, storedRulePdl.b64Enc == "true", storedRulePdl.hexEnc == "true");
         }
 
@@ -216,16 +315,36 @@ function onChangeInPdl(event){
                     preferences.store = item.store;
                     preferences.use_stored = item.use_stored;
 
+                    div_description.children[0].remove();
+                    var p_description = document.createElement("p");
+                    p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+
+                    var b = document.createElement("b");
+                    b.innerText = in_tab_domain.value;
+                    p_description.insertAdjacentElement("beforeend", b);
+                    p_description.insertAdjacentText("beforeend", " heslo podla aktualnych nastaveni generatora.");
+
+                    var br = document.createElement("br");
+                    p_description.insertAdjacentElement("beforeend", br);
+
+                    p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+
+                    b = document.createElement("b");
+                    b.innerText = preferences.length;
+                    p_description.insertAdjacentElement("beforeend", b);
+                    p_description.insertAdjacentText("beforeend", " znakov v ");
+
+                    b = document.createElement("b");
                     if(preferences.base64 == true){
-                        div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
-                        podla aktualnych nastaveni generatora.<br>\
-                        Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>Base-64</b> kodovani."
+                        b.innerText = "Base-64";
                     }
                     else if(preferences.hex == true){
-                        div_description.innerHTML="<p>Generator vygeneruje pre domenu <b>" + in_tab_domain.value + " </b> heslo\
-                        podla aktualnych nastaveni generatora.<br>\
-                        Heslo bude dlhe <b> " + preferences.length + "</b> znakov v <b>HEX</b> kodovani."
+                        b.innerText = "HEX";
                     }
+                    p_description.insertAdjacentElement("beforeend", b);
+                    p_description.insertAdjacentText("beforeend", " kodovani.");
+
+                    div_description.appendChild(p_description);
                 }
             );
         }
@@ -414,6 +533,8 @@ function generatePassword(){
                 var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
                 hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000).then( pwd => {
                     in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+                    copyToClipboard();
+                    showPassword();
                 });
             }
             // ak nenasiel, tak generuje s aktualnymi nastaveniami generatora a nasledne ulozi tieto nastavenia ako nove pravidlo
@@ -423,6 +544,8 @@ function generatePassword(){
                 var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
                 hashNTimes(strToHash, preferences.base64, preferences.hex, 1000).then( pwd => {
                     in_generated_pwd.value = pwd.substring(0,preferences.length);
+                    copyToClipboard();
+                    showPassword();
                 });
 
                 //Ulozenie nastaveni do DB
@@ -444,6 +567,8 @@ function generatePassword(){
                 var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant; // zatial tam je DOMAIN NAME
                 hashNTimes(strToHash, storedRule.b64Enc, storedRule.hexEnc, 1000).then( pwd => {
                     in_generated_pwd.value = pwd.substring(0,storedRule.pwdLength);
+                    copyToClipboard();
+                    showPassword();
                 });
             }
             // ak nenasiel tak musim upozornit pouzivatela. Zaroven nic negenerujem a ani neukladam.
@@ -481,6 +606,8 @@ function generatePassword(){
         var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
         hashNTimes(strToHash, preferences.base64, preferences.hex, 1000).then( pwd => {
             in_generated_pwd.value = pwd.substring(0,preferences.length);
+            copyToClipboard();
+            showPassword();
         });
 
     }
@@ -490,8 +617,24 @@ function generatePassword(){
         var strToHash = in_inserted_pwd.value + in_tab_pdl.value + preferences.constant;
         hashNTimes(strToHash, preferences.base64, preferences.hex, 1000).then( pwd => {
             in_generated_pwd.value = pwd.substring(0,preferences.length);
+            copyToClipboard();
+            showPassword();
         });
     }
+}
+
+function showPassword(){
+    if(Number(preferences.time) > 0){
+        in_generated_pwd.type = "text";
+        setTimeout(function hidePassord(){in_generated_pwd.type = "password";}, Number(preferences.time) * 1000);
+    }
+}
+
+function copyToClipboard(){
+    in_generated_pwd.type="text";
+    in_generated_pwd.select();
+    document.execCommand("copy");
+    in_generated_pwd.type="password";
 }
 
 //Nacitanie nastaveni generatora
