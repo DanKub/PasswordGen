@@ -1,5 +1,61 @@
 {
     "extensionDescription": {
         "message": "Generátor jednoúčelových hesiel, ktorý umožňuje na každej stránke (internetovej službe) používateľovi zadať vždy rovnakú heslovú frázu, a na základe definovaných pravidiel a nastavení pre stránku (internetovú službu) sa vygeneruje vždy iné heslo."
+    },
+
+    "popup_inputlabel_domain":{
+        "message": "Doména:"
+    },
+
+    "popup_inputlabel_pdl":{
+        "message": "Nadradená doména:"
+    },
+
+    "popup_inputlabel_pwd":{
+        "message": "Heslo:"
+    },
+
+    "popup_inputlabel_generatedpwd":{
+        "message": "Vygenerované heslo:"
+    },
+
+    "popup_description_C_1":{
+        "message": "Generátor vygeneruje pre doménu "
+    },
+
+    "popup_description_1_1":{
+        "message": " heslo podľa uloženého pravidla."
+    },
+
+    "popup_description_2_1":{
+        "message": " heslo s rovnakými nastaveniami, aké sa používajú pre všetky "
+    },
+
+    "popup_description_3_1":{
+        "message": " heslo podľa aktuálnych nastavení generátora."
+    },
+
+    "popup_description_C_2":{
+        "message": "Heslo bude dlhé "
+    },
+
+    "popup_description_2_2":{
+        "message": " subdomény."
+    },
+
+    "popup_description_C_3_one":{
+        "message": " znak v "
+    },
+
+    "popup_description_C_3_few":{
+        "message": " znaky v "
+    },
+
+    "popup_description_C_3_other":{
+        "message": " znakov v "
+    },
+
+    "popup_description_C_4":{
+        "message": " kódovaní."
     }
 }

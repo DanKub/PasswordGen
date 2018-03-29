@@ -97,17 +97,31 @@ function showUI(){
                     in_tab_pdl.value = storedRuleDomain.pdl;
                     in_tab_pdl.readOnly = true;
 
-                    p_description.insertAdjacentText("beforeend", "Na zaklade ulozeneho pravidla pre domenu ");
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_1"));
 
                     var b = document.createElement("b");
                     b.innerText = storedRuleDomain.domain;
                     p_description.insertAdjacentElement("beforeend", b);
-                    p_description.insertAdjacentText("beforeend", " sa vygeneruje heslo dlhe ");
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_1_1"));
+
+                    var br = document.createElement("br");
+                    p_description.insertAdjacentElement("beforeend", br);
+
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_2"));
 
                     b = document.createElement("b");
                     b.innerText = storedRuleDomain.pwdLength;
                     p_description.insertAdjacentElement("beforeend", b);
-                    p_description.insertAdjacentText("beforeend", " znakov v ");
+                    var plural = new Intl.PluralRules().select(storedRuleDomain.pwdLength);
+                    if(plural == 'one'){
+                        p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_one"));
+                    }
+                    else if(plural == "few"){
+                        p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_few"));
+                    }
+                    else{
+                        p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_other"));
+                    }
 
                     b = document.createElement("b");
                     if(storedRuleDomain.b64Enc == "true"){
@@ -117,7 +131,7 @@ function showUI(){
                         b.innerText = "HEX";
                     }
                     p_description.insertAdjacentElement("beforeend", b);
-                    p_description.insertAdjacentText("beforeend", " kodovani.");
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_4"));
 
                     createParentDomainsList();
                 }
@@ -136,27 +150,36 @@ function showUI(){
                         // Zobraz tieto inputy... to vsetko iba v pripade, ze na takuto neulozenu domenu sme natrafili 1. krat.
                         if(storedRulePdl != null){
 
-                            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_1"));
 
                             var b = document.createElement("b");
                             b.innerText = in_tab_domain.value;
                             p_description.insertAdjacentElement("beforeend", b);
-                            p_description.insertAdjacentText("beforeend", " heslo s rovnakymi nastaveniami ake sa pouzivaju pre vsetky ");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_2_1"));
         
                             b = document.createElement("b");
                             b.innerText = "*." + storedRulePdl.pdl;
                             p_description.insertAdjacentElement("beforeend", b);
-                            p_description.insertAdjacentText("beforeend", " subdomeny.");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_2_2"));
 
                             var br = document.createElement("br");
                             p_description.insertAdjacentElement("beforeend", br);
 
-                            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_2"));
 
                             b = document.createElement("b");
                             b.innerText = storedRulePdl.pwdLength;
                             p_description.insertAdjacentElement("beforeend", b);
-                            p_description.insertAdjacentText("beforeend", " znakov v ");
+                            var plural = new Intl.PluralRules().select(storedRulePdl.pwdLength);
+                            if(plural == 'one'){
+                                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_one"));
+                            }
+                            else if(plural == "few"){
+                                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_few"));
+                            }
+                            else{
+                                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_other"));
+                            }
         
                             b = document.createElement("b");
                             if(storedRulePdl.b64Enc == "true"){
@@ -166,7 +189,7 @@ function showUI(){
                                 b.innerText = "HEX";
                             }
                             p_description.insertAdjacentElement("beforeend", b);
-                            p_description.insertAdjacentText("beforeend", " kodovani.");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_4"));
 
 
                             temporarySavePreferences(storedRulePdl.pwdLength, storedRulePdl.b64Enc == "true", storedRulePdl.hexEnc == "true");
@@ -178,23 +201,32 @@ function showUI(){
                             in_tab_domain.value = tabDomain;
                             in_tab_pdl.value = tabPdl;
 
-                            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_1"));
 
                             var b = document.createElement("b");
                             b.innerText = in_tab_domain.value;
                             p_description.insertAdjacentElement("beforeend", b);
-                            p_description.insertAdjacentText("beforeend", " heslo podla aktualnych nastaveni generatora.");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_3_1"));
 
                             var br = document.createElement("br");
                             p_description.insertAdjacentElement("beforeend", br);
 
-                            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_2"));
 
                             b = document.createElement("b");
                             b.innerText = preferences.length;
                             p_description.insertAdjacentElement("beforeend", b);
-                            p_description.insertAdjacentText("beforeend", " znakov v ");
-        
+                            var plural = new Intl.PluralRules().select(preferences.length);
+                            if(plural == 'one'){
+                                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_one"));
+                            }
+                            else if(plural == "few"){
+                                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_few"));
+                            }
+                            else{
+                                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_other"));
+                            }
+
                             b = document.createElement("b");
                             if(preferences.base64 == true){
                                 b.innerText = "Base-64";
@@ -203,7 +235,7 @@ function showUI(){
                                 b.innerText = "HEX";
                             }
                             p_description.insertAdjacentElement("beforeend", b);
-                            p_description.insertAdjacentText("beforeend", " kodovani.");
+                            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_4"));
 
 
                             createParentDomainsList();
@@ -216,22 +248,31 @@ function showUI(){
             in_tab_domain.value = tabDomain;
             in_tab_pdl.value = tabPdl;
 
-            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_1"));
 
             var b = document.createElement("b");
             b.innerText = in_tab_domain.value;
             p_description.insertAdjacentElement("beforeend", b);
-            p_description.insertAdjacentText("beforeend", " heslo podla aktualnych nastaveni generatora.");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_3_1"));
 
             var br = document.createElement("br");
             p_description.insertAdjacentElement("beforeend", br);
 
-            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_2"));
 
             b = document.createElement("b");
             b.innerText = preferences.length;
             p_description.insertAdjacentElement("beforeend", b);
-            p_description.insertAdjacentText("beforeend", " znakov v ");
+            var plural = new Intl.PluralRules().select(preferences.length);
+            if(plural == 'one'){
+                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_one"));
+            }
+            else if(plural == "few"){
+                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_few"));
+            }
+            else{
+                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_other"));
+            }
 
             b = document.createElement("b");
             if(preferences.base64 == true){
@@ -241,7 +282,7 @@ function showUI(){
                 b.innerText = "HEX";
             }
             p_description.insertAdjacentElement("beforeend", b);
-            p_description.insertAdjacentText("beforeend", " kodovani.");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_4"));
 
 
             createParentDomainsList();
@@ -263,27 +304,36 @@ function onChangeInPdl(event){
         if(storedRulePdl != null){
             div_description.children[0].remove();
             var p_description = document.createElement("p");
-            p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_1"));
 
             var b = document.createElement("b");
             b.innerText = in_tab_domain.value;
             p_description.insertAdjacentElement("beforeend", b);
-            p_description.insertAdjacentText("beforeend", " heslo s rovnakymi nastaveniami ake sa pouzivaju pre vsetky ");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_2_1"));
 
             b = document.createElement("b");
             b.innerText = "*." + storedRulePdl.pdl;
             p_description.insertAdjacentElement("beforeend", b);
-            p_description.insertAdjacentText("beforeend", " subdomeny.");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_2_2"));
 
             var br = document.createElement("br");
             p_description.insertAdjacentElement("beforeend", br);
 
-            p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_2"));
 
             b = document.createElement("b");
             b.innerText = storedRulePdl.pwdLength;
             p_description.insertAdjacentElement("beforeend", b);
-            p_description.insertAdjacentText("beforeend", " znakov v ");
+            var plural = new Intl.PluralRules().select(storedRulePdl.pwdLength);
+            if(plural == 'one'){
+                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_one"));
+            }
+            else if(plural == "few"){
+                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_few"));
+            }
+            else{
+                p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_other"));
+            }
 
             b = document.createElement("b");
             if(storedRulePdl.b64Enc == "true"){
@@ -293,7 +343,7 @@ function onChangeInPdl(event){
                 b.innerText = "HEX";
             }
             p_description.insertAdjacentElement("beforeend", b);
-            p_description.insertAdjacentText("beforeend", " kodovani.");
+            p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_4"));
 
             div_description.appendChild(p_description);
 
@@ -317,22 +367,31 @@ function onChangeInPdl(event){
 
                     div_description.children[0].remove();
                     var p_description = document.createElement("p");
-                    p_description.insertAdjacentText("beforeend", "Generator vygeneruje pre domenu ");
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_1"));
 
                     var b = document.createElement("b");
                     b.innerText = in_tab_domain.value;
                     p_description.insertAdjacentElement("beforeend", b);
-                    p_description.insertAdjacentText("beforeend", " heslo podla aktualnych nastaveni generatora.");
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_3_1"));
 
                     var br = document.createElement("br");
                     p_description.insertAdjacentElement("beforeend", br);
 
-                    p_description.insertAdjacentText("beforeend", "Heslo bude dlhe ");
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_2"));
 
                     b = document.createElement("b");
                     b.innerText = preferences.length;
                     p_description.insertAdjacentElement("beforeend", b);
-                    p_description.insertAdjacentText("beforeend", " znakov v ");
+                    var plural = new Intl.PluralRules().select(preferences.length);
+                    if(plural == 'one'){
+                        p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_one"));
+                    }
+                    else if(plural == "few"){
+                        p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_few"));
+                    }
+                    else{
+                        p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_3_other"));
+                    }
 
                     b = document.createElement("b");
                     if(preferences.base64 == true){
@@ -342,7 +401,7 @@ function onChangeInPdl(event){
                         b.innerText = "HEX";
                     }
                     p_description.insertAdjacentElement("beforeend", b);
-                    p_description.insertAdjacentText("beforeend", " kodovani.");
+                    p_description.insertAdjacentText("beforeend", browser.i18n.getMessage("popup_description_C_4"));
 
                     div_description.appendChild(p_description);
                 }
@@ -695,3 +754,9 @@ loadPreferences();
 
 in_inserted_pwd.addEventListener("change", generatePassword);
 in_tab_pdl.addEventListener("change", onChangeInPdl);
+
+// Localisation
+document.getElementById("strong_domain").textContent = browser.i18n.getMessage("popup_inputlabel_domain");
+document.getElementById("strong_pdl").textContent = browser.i18n.getMessage("popup_inputlabel_pdl");
+document.getElementById("strong_pwd").textContent = browser.i18n.getMessage("popup_inputlabel_pwd");
+document.getElementById("strong_generatedpwd").textContent = browser.i18n.getMessage("popup_inputlabel_generatedpwd");

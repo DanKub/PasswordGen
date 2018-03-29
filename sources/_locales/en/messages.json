@@ -1,5 +1,61 @@
 {
     "extensionDescription": {
         "message": "Password generator - allows use the same password for every domain but generated password will be for every domain different."
+    },
+
+    "popup_inputlabel_domain":{
+        "message": "Domain:"
+    },
+
+    "popup_inputlabel_pdl":{
+        "message": "Parent domain level:"
+    },
+
+    "popup_inputlabel_pwd":{
+        "message": "Password:"
+    },
+
+    "popup_inputlabel_generatedpwd":{
+        "message": "Generated password:"
+    },
+
+    "popup_description_C_1":{
+        "message": "The generator will generate password for the "
+    },
+
+    "popup_description_1_1":{
+        "message": " domain according to the stored rule."
+    },
+
+    "popup_description_2_1":{
+        "message": " domain with same rules as are used for all "
+    },
+
+    "popup_description_3_1":{
+        "message": " domain according to the current generator preferences."
+    },
+
+    "popup_description_C_2":{
+        "message": "Password will be "
+    },
+
+    "popup_description_2_2":{
+        "message": " subdomains."
+    },
+
+    "popup_description_C_3_one":{
+        "message": " character long in "
+    },
+
+    "popup_description_C_3_few":{
+        "message": " characters long in "
+    },
+
+    "popup_description_C_3_other":{
+        "message": " characters long in "
+    },
+
+    "popup_description_C_4":{
+        "message": " encoding."
     }
 }
