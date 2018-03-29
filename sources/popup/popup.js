@@ -752,6 +752,7 @@ function openGenRulesDB(){
 openGenRulesDB();
 loadPreferences();
 
+in_inserted_pwd.focus();
 in_inserted_pwd.addEventListener("change", generatePassword);
 in_tab_pdl.addEventListener("change", onChangeInPdl);
 

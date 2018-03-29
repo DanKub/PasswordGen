@@ -15,6 +15,18 @@ p{
     font-size: 1.1em;
 }
 
+#btn_del_all_rules{
+    margin-left: 1em;
+}
+
+#in_import{
+    margin-left: 1em;
+}
+
+#btn_export{
+    margin-left: 1em;
+}
+
 #lbl_store{
     text-align: left;
 }

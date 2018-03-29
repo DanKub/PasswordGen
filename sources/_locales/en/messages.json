@@ -57,5 +57,81 @@
 
     "popup_description_C_4":{
         "message": " encoding."
+    },
+
+    "options_p_gen_prefs":{
+        "message": "Generator preferences"
+    },
+
+    "options_lbl_pwd_length":{
+        "message": "Password length:"
+    },
+
+    "options_lbl_const":{
+        "message": "Constant:"
+    },
+
+    "options_lbl_enc":{
+        "message": "Encoding:"
+    },
+
+    "options_lbl_time":{
+        "message": "Time to show password"
+    },
+
+    "options_p_storage_settings":{
+        "message": "Storage settings"
+    },
+
+    "options_lbl_store":{
+        "message": "Store generator rules"
+    },
+
+    "options_lbl_use_stored":{
+        "message": "Use stored generator rules for password generating"
+    },
+
+    "options_btn_del_all_rules":{
+        "message": "Delete all stored rules"
+    },
+
+    "options_p_import":{
+        "message": "Import generator preferences and rules"
+    },
+
+    "options_p_export":{
+        "message": "Export generator preferences and rules"
+    },
+
+    "options_p_stored_rules":{
+        "message": "Stored generator rules"
+    },
+
+    "options_th_domain":{
+        "message": "Domain"
+    },
+
+    "options_th_pwd_length":{
+        "message": "Password length"
+    },
+
+    "options_th_base64":{
+        "message": "Base-64 encoding"
+    },
+
+    "options_th_hex":{
+        "message": "HEX encoding"
+    },
+
+    "options_th_pdl":{
+        "message": "Parent domain level"
+    },
+
+    "options_th_del":{
+        "message": "Delete rule"
+    },
+
+    "options_confirm_del_all_rules":{
+        "message": "All stored rules will be deleted"
     }
 }

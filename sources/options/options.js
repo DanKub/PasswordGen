@@ -307,10 +307,15 @@ function deleteStoredRule(event){
 }
 
 function deleteAllStoredRules(){
-    deleteTableRules();
-    var transaction = genRulesDB.transaction(["rules"], "readwrite");
-    var rulesObjStore = transaction.objectStore("rules");
-    rulesObjStore.clear();
+    if(confirm(browser.i18n.getMessage("options_confirm_del_all_rules"))){
+        deleteTableRules();
+        var transaction = genRulesDB.transaction(["rules"], "readwrite");
+        var rulesObjStore = transaction.objectStore("rules");
+        rulesObjStore.clear();
+    }
+    else{
+        console.log("Rules deleting was canceled by user");
+    }
 }
 
 function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isChild){
@@ -552,7 +557,29 @@ function isValidJson(data){
     return true;
 }
 
+function UILocalization(){
+    document.getElementById("p_gen_prefs").textContent = browser.i18n.getMessage("options_p_gen_prefs");
+    document.getElementById("lbl_pwd_length").textContent = browser.i18n.getMessage("options_lbl_pwd_length");
+    document.getElementById("lbl_const").textContent = browser.i18n.getMessage("options_lbl_const");
+    document.getElementById("lbl_enc").textContent = browser.i18n.getMessage("options_lbl_enc");
+    document.getElementById("lbl_time").textContent = browser.i18n.getMessage("options_lbl_time");
+    document.getElementById("p_storage_settings").textContent = browser.i18n.getMessage("options_p_storage_settings");
+    document.getElementById("lbl_store").textContent = browser.i18n.getMessage("options_lbl_store");
+    document.getElementById("lbl_use_stored").textContent = browser.i18n.getMessage("options_lbl_use_stored");
+    document.getElementById("btn_del_all_rules").textContent = browser.i18n.getMessage("options_btn_del_all_rules");
+    document.getElementById("p_import").textContent = browser.i18n.getMessage("options_p_import");
+    document.getElementById("p_export").textContent = browser.i18n.getMessage("options_p_export");
+    document.getElementById("p_stored_rules").textContent = browser.i18n.getMessage("options_p_stored_rules");
+    document.getElementById("th_domain").textContent = browser.i18n.getMessage("options_th_domain");
+    document.getElementById("th_pwd_length").textContent = browser.i18n.getMessage("options_th_pwd_length");
+    document.getElementById("th_base64").textContent = browser.i18n.getMessage("options_th_base64");
+    document.getElementById("th_hex").textContent = browser.i18n.getMessage("options_th_hex");
+    document.getElementById("th_pdl").textContent = browser.i18n.getMessage("options_th_pdl");
+    document.getElementById("th_del").textContent = browser.i18n.getMessage("options_th_del");
+}
+
 openGenRulesDB();
+UILocalization();
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
