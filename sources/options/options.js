@@ -14,7 +14,10 @@ var in_import = document.getElementById("in_import");
 var genRulesDB;
 
 var minPwdLen = 1;
-var maxPwdLen = 64;
+var maxPwdLen = 86;
+var minTime = 0;
+var maxTime = 60;
+var maxConstantLen = 100;
 
 
 /*
@@ -110,20 +113,28 @@ function deleteTableRules(){
 function validatePwdLen(pwdLen){
     pwdLen = pwdLen.replace(/\D+/g, "");
     if(pwdLen < 1){
-        pwdLen = 1;
+        pwdLen = minPwdLen;
     }
-    else if(pwdLen > 64){
-        pwdLen = 64;
+    else if(pwdLen > maxPwdLen){
+        pwdLen = maxPwdLen;
     }
     return pwdLen;
 }
 
 function validatePdl(pdl){
-    // Odstranim vsetky nevalidne znaky a zo zaciatku bodku alebo cislo
-    pdl = pdl.replace(/[^A-Za-z0-9.]/g, "");
-    if(pdl.charAt(0).match(/[.\d]/)){
-        pdl = pdl.slice(1);
-    }
+    // Odstranim vsetky nevalidne znaky
+    pdl = pdl.replace(/[^A-Za-z0-9.-]/g, "");
+    // Zo zaciatku odstranim bodky a pomlcky
+    pdl = pdl.replace(/^(\.+)|^(-+)/g, "");
+    // Viacero pomlciek za sebou nahradim iba jednou
+    pdl = pdl.replace(/-{2,}/g, "-");
+    // Za pomlckou nesmie nasledovat bodka
+    pdl = pdl.replace(/\-./g,".");
+    // Viacero bodiek za sebou nahradim iba jednou
+    pdl = pdl.replace(/\.{2,}/g, ".");
+    // Z konca odstranim bodky a pomlcky
+    pdl = pdl.replace(/(\.|-)+$/g, "");
+
     return pdl;
 }
 
@@ -134,6 +145,7 @@ function updateUIChildRules(ruleChilds, parentNode){
                 table.rows[j].children[1].firstChild.value = parentNode.cells[1].firstChild.value;
                 table.rows[j].children[2].firstChild.checked = parentNode.cells[2].firstChild.checked;
                 table.rows[j].children[3].firstChild.checked = parentNode.cells[3].firstChild.checked;
+                table.rows[j].children[4].firstChild.value = parentNode.cells[4].firstChild.value;
             }
         }
     }
@@ -168,7 +180,9 @@ function updateStoredRule(event){
                                     pdl: node.cells[0].firstChild.data, // zmena pdl na domain name -> takto vznikne novy strom
                                     }, node.cells[0].firstChild.data);
 
-                node.cells[4].firstChild.value = node.cells[0].firstChild.data; // prepisem pld zaznam v UI
+                // Zmena UI tabulky - zmeneny zaznam vymazem od rodica a hodim ho pod tabulku
+                insertNewTableEntry(node.cells[0].firstChild.data, Number(node.cells[1].firstChild.value), node.cells[2].firstChild.checked, node.cells[3].firstChild.checked, node.cells[0].firstChild.data, false);
+                node.remove();
 
                 // Odstranenie zaznamu od rodica (nakolko zo zmeneneho zaznamu je teraz samostatny strom)
                 // vyziadam si jeho rodica a odstranim ho odtial
@@ -343,7 +357,6 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isCh
 
     var pdlCellInput = document.createElement("input");
     pdlCellInput.type = "text";
-    pdlCellInput.pattern = "([[a-z0-9]+\.)*[a-z0-9]+\.[a-z0-9]+";
 
     var pwdLengthCellInput = document.createElement("input");
     pwdLengthCellInput.type = "text";
@@ -430,12 +443,12 @@ function importSettings(){
     }
 
     if(file.type != "application/json"){
-        alert("Selected file is not JSON");
+        alert(browser.i18n.getMessage("options_alert_not_json_file"));
         return;
     }
 
     if(file.size > (maxFileSize*1024*1024)){
-        alert("Selected file is too large");
+        alert(browser.i18n.getMessage("options_alert_file_large"));
         return;
     }
 
@@ -481,7 +494,7 @@ function isValidJson(data){
             obj.preferences.time == undefined ||
             obj.preferences.store == undefined ||
             obj.preferences.use_stored == undefined){
-            alert("Invalid Preference Name");
+            alert(browser.i18n.getMessage("options_alert_invalid_preference_name"));
             return false;
         }
         if (typeof(obj.preferences.length) != "string" ||
@@ -491,27 +504,27 @@ function isValidJson(data){
             typeof(obj.preferences.time) != "string" ||
             typeof(obj.preferences.store) != "boolean" ||
             typeof(obj.preferences.use_stored) != "boolean"){
-            alert("Invalid Preference Type");
+            alert(browser.i18n.getMessage("options_alert_invalid_preference_type"));
             return false;
             }
         if(!obj.preferences.length.match(/^[0-9]+$/)){
-            alert("Invalid PDWLEN value " + obj.preferences.length);
+            alert(browser.i18n.getMessage("options_alert_invalid_pwd_len") + obj.preferences.length);
             return false;
         }
         if(parseInt(obj.preferences.length, 10) < minPwdLen || parseInt(obj.preferences.length, 10) > maxPwdLen){
-            alert("Invalid PDWLEN value " + obj.preferences.length);
+            alert(browser.i18n.getMessage("options_alert_invalid_pwd_len") + obj.preferences.length);
             return false;
         }
         if(!obj.preferences.time.match(/^[0-9]+$/)){
-            alert("Invalid Time value " + obj.preferences.time);
+            alert(browser.i18n.getMessage("options_alert_invalid_time") + obj.preferences.time);
             return false;
         }
-        if(parseInt(obj.preferences.time, 10) < 0 || parseInt(obj.preferences.time, 10) > 60){
-            alert("Invalid Time value " + obj.preferences.time);
+        if(parseInt(obj.preferences.time, 10) < minTime || parseInt(obj.preferences.time, 10) > maxTime){
+            alert(browser.i18n.getMessage("options_alert_invalid_time") + obj.preferences.time);
             return false;
         }
-        if(obj.preferences.constant.length > 100){
-            alert("Invalid Constant length");
+        if(obj.preferences.constant.length > maxConstantLen){
+            alert(browser.i18n.getMessage("options_alert_invalid_const_len"));
             return false;
         }
 
@@ -522,7 +535,7 @@ function isValidJson(data){
                 obj.rules[i].b64Enc == undefined ||
                 obj.rules[i].hexEnc == undefined ||
                 obj.rules[i].pdl == undefined){
-                alert("InvalidJSON");
+                alert(browser.i18n.getMessage("options_alert_invalid_json"));
                 return false;
                 }
             if (obj.rules[i].domain == null ||
@@ -530,28 +543,28 @@ function isValidJson(data){
                 obj.rules[i].b64Enc == null ||
                 obj.rules[i].hexEnc == null ||
                 obj.rules[i].pdl == null) {
-                alert('invalidJSON');
+                alert(browser.i18n.getMessage("options_alert_invalid_json"));
                 return false;
             }
             if (!obj.rules[i].pwdLength.match(/^[0-9]+$/)) {
-                alert("Invalid PWDLEN value" + obj.rules[i].pwdLength);
+                alert(browser.i18n.getMessage("options_alert_invalid_pwd_len") + obj.rules[i].pwdLength);
                 return false;
             }
             if (parseInt(obj.rules[i].pwdLength, 10) < minPwdLen || parseInt(obj.rules[i].pwdLength, 10) > maxPwdLen) {
-                alert('Invalid PWDLEN value' + obj.rules[i].pwdLength);
+                alert(browser.i18n.getMessage("options_alert_invalid_pwd_len") + obj.rules[i].pwdLength);
                 return false;
             }
             if (!(obj.rules[i].b64Enc == "true" || obj.rules[i].b64Enc == "false")) {
-                alert("Ivalid b64 encoding");
+                alert(browser.i18n.getMessage("options_alert_invalid_base64_enc"));
                 return false;
             }
             if (!(obj.rules[i].hexEnc == "true" || obj.rules[i].hexEnc == "false")) {
-                alert("invalid HEX encoding");
+                alert(browser.i18n.getMessage("options_alert_invalid_hex_enc"));
                 return false;
             }
         }
     } catch (error) {
-        alert("Invalid JSON");
+        alert(browser.i18n.getMessage("options_alert_invalid_json"));
         return false;
     }
     return true;
@@ -583,7 +596,7 @@ UILocalization();
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
-table.addEventListener("input", updateStoredRule);
+table.addEventListener("change", updateStoredRule);
 btn_export.addEventListener("click", exportSettings);
 in_import.addEventListener("change", importSettings);
 btn_del_all_rules.addEventListener("click", deleteAllStoredRules);

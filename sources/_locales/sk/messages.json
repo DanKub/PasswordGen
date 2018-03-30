@@ -59,6 +59,10 @@
         "message": " kódovaní."
     },
 
+    "popup_alert_rule_not_found":{
+        "message": "Heslo nie je možné vygenerovať - pravidlo pre túto doménu ešte nie je uložené"
+    },
+
     "options_p_gen_prefs":{
         "message": "Nastavenia generátora"
     },
@@ -133,5 +137,45 @@
 
     "options_confirm_del_all_rules":{
         "message": "Všetky uložené pravidlá budu vymazané"
+    },
+
+    "options_alert_not_json_file":{
+        "message": "Zvolený súbor nie je JSON"
+    },
+
+    "options_alert_file_large":{
+        "message": "Zvolený súbor je príliž veľký"
+    },
+
+    "options_alert_invalid_json":{
+        "message": "Zvolený JSON súbor má neplatný formát"
+    },
+
+    "options_alert_invalid_preference_name":{
+        "message": "Zvolený JSON súbor obsahuje neplatný názov nastavenia"
+    },
+
+    "options_alert_invalid_preference_type":{
+        "message": "Zvolený JSON súbor obsahuje neplatný typ nastavenia"
+    },
+
+    "options_alert_invalid_pwd_len":{
+        "message": "Zvolený JSON súbor obsahuje neplatnú hodnotu dĺžky hesla: "
+    },
+
+    "options_alert_invalid_time":{
+        "message": "Zvolený JSON súbor obsahuje neplatnú hodnotu času zobrazovania hesla: "
+    },
+
+    "options_alert_invalid_const_len":{
+        "message": "Zvolený JSON súbor obsahuje neplatnú hodnotu dĺžky konštanty"
+    },
+
+    "options_alert_invalid_base64_enc":{
+        "message": "Zvolený JSON súbor obsahuje neplatnú hodnotu Base-64 kódovania"
+    },
+
+    "options_alert_invalid_hex_enc":{
+        "message": "Zvolený JSON súbor obsahuje neplatnú hodnotu HEX kódovania"
     }
 }

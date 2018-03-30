@@ -290,8 +290,37 @@ function showUI(){
     }
 }
 
+function validatePdl(pdl){
+    // Odstranim vsetky nevalidne znaky
+    pdl = pdl.replace(/[^A-Za-z0-9.-]/g, "");
+    // Zo zaciatku odstranim bodky a pomlcky
+    pdl = pdl.replace(/^(\.+)|^(-+)/g, "");
+    // Viacero pomlciek za sebou nahradim iba jednou
+    pdl = pdl.replace(/-{2,}/g, "-");
+    // Za pomlckou nesmie nasledovat bodka
+    pdl = pdl.replace(/\-./g,".");
+    // Viacero bodiek za sebou nahradim iba jednou
+    pdl = pdl.replace(/\.{2,}/g, ".");
+    // Z konca odstranim bodky a pomlcky
+    pdl = pdl.replace(/(\.|-)+$/g, "");
+
+    return pdl;
+}
+
 function onChangeInPdl(event){
-    var changedPdl = event.target.value;
+    if(!event.isTrusted){
+        console.log("The event is not trusted");
+        return;
+    }
+
+    var changedPdl = validatePdl(event.target.value);
+    in_tab_pdl.value = changedPdl;
+
+    // Ak je pdl po validacii rovnaka ako pred zmenou, tak nerobim nic
+    if(changedPdl == event.target.value){
+        return;
+    }
+    
     var transaction = genRulesDB.transaction(["rules"], "readonly");
     var rulesObjStore = transaction.objectStore("rules");
     var indexPdl = rulesObjStore.index("pdl");
@@ -523,7 +552,11 @@ function saveGenRule(){
 }
 
 // Generovanie hesla
-function generatePassword(){
+function generatePassword(event){
+    if(!event.isTrusted){
+        console.log("The event is not trusted");
+        return;
+    }
     // Vstupny retazec zahashujem N krat a vyplujem ho do pozadovaneho kodovania (B64/ENC)
     async function hashNTimes(strToHash, b64Enc, hexEnc, N){
         if (String(b64Enc) == "true" && String(hexEnc) == "false"){
@@ -633,7 +666,7 @@ function generatePassword(){
             // ak nenasiel tak musim upozornit pouzivatela. Zaroven nic negenerujem a ani neukladam.
             else {
                 console.log("Rule with domain name '" + in_tab_domain.value + "' was not found in DB");
-                console.log("ZOBRAZENIE UPOZORNENIA!");
+                alert(browser.i18n.getMessage("popup_alert_rule_not_found"));
             }
         }
         req.onerror = function(){
@@ -646,9 +679,9 @@ function generatePassword(){
         req.onsuccess = function(){
             var storedRule = req.result;
 
-            // ak nasiel ulozenu domenu v DB tak nechavam bez zmeny // ALEBO PREPISAT AKTUALNYMI NASTAVENIAMI? -skor asi to
+            // ak nasiel ulozenu domenu v DB tak nechavam bez zmeny
             if (storedRule != null){
-
+                ;
             }
             // ak nenasiel ulozenu domenu, tak ju ulozim
             else {

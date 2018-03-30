@@ -59,6 +59,10 @@
         "message": " encoding."
     },
 
+    "popup_alert_rule_not_found":{
+        "message": "The password can't be generated - the rule for this domain isn't stored yet"
+    },
+
     "options_p_gen_prefs":{
         "message": "Generator preferences"
     },
@@ -133,5 +137,45 @@
 
     "options_confirm_del_all_rules":{
         "message": "All stored rules will be deleted"
+    },
+
+    "options_alert_not_json_file":{
+        "message": "Selected file is not JSON"
+    },
+
+    "options_alert_file_large":{
+        "message": "Selected file is too large"
+    },
+
+    "options_alert_invalid_json":{
+        "message": "Selected JSON file has an invalid format"
+    },
+
+    "options_alert_invalid_preference_name":{
+        "message": "Selected JSON file contains invalid preference name"
+    },
+
+    "options_alert_invalid_preference_type":{
+        "message": "Selected JSON file contains invalid preference type"
+    },
+
+    "options_alert_invalid_pwd_len":{
+        "message": "Selected JSON file contains invalid password length value: "
+    },
+
+    "options_alert_invalid_time":{
+        "message": "Selected JSON file contains invalid time to show password value: "
+    },
+
+    "options_alert_invalid_const_len":{
+        "message": "Selected JSON file contains invalid constant length"
+    },
+
+    "options_alert_invalid_base64_enc":{
+        "message": "Selected JSON file contains invalid Base-64 encoding value"
+    },
+
+    "options_alert_invalid_hex_enc":{
+        "message": "Selected JSON file contains invalid HEX encoding value"
     }
 }
