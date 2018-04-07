@@ -1,10 +1,31 @@
+/*******************************************************************************
+Copyright © 2018 Daniel Kubica
+
+This file is part of PasswordGen.
+
+   PasswordGen is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   PasswordGen is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with PasswordGen.  If not, see <http://www.gnu.org/licenses/>.
+********************************************************************************
+                 GitHub: https://github.com/DanKub/PasswordGen
+*******************************************************************************/
+
+
 var suffListDB;
 var genRulesDB;
-var popupPort;
 
 var preferences = {
-    length: "15",
-    constant: "",
+    length: "86",
+    constant: "ChAnge_ME!!!",
     base64: true,
     hex: false,
     time: "0",
@@ -12,6 +33,9 @@ var preferences = {
     use_stored: true
 }
 
+/*
+Put Public Suffix List data into IndexedDB
+*/
 function putSuffListDataToDB(data) {
     var transaction = suffListDB.transaction(["pubsufflist"], "readwrite");
     var objStoreReq = transaction.objectStore("pubsufflist");
@@ -23,6 +47,9 @@ function putSuffListDataToDB(data) {
     objStoreReq.put(currentDate, "pslversion");
 }
 
+/*
+Download Public Suffix List and put it to IndexedDB
+*/
 function getSuffList() {
     var suffListPath = "https://publicsuffix.org/list/public_suffix_list.dat";
     var xmlHttp = new XMLHttpRequest();
@@ -36,6 +63,10 @@ function getSuffList() {
     xmlHttp.send(null);
 }
 
+/*
+Check if locally stored Public Suffix List isn't older than 1 month.
+In case that it's older, update list with new version from web.
+*/
 function updateSuffList() {
     var currentDate = String(new Date().getMonth() + 1) + " " + String(new Date().getFullYear());
 
@@ -55,6 +86,9 @@ function updateSuffList() {
     }
 }
 
+/*
+Initialize PubSuffList Database before first use
+*/
 function initSuffListDB() {
     var dbOpenReq = window.indexedDB.open("PubSuffList");
     var dbUpgraded = false;
@@ -64,7 +98,6 @@ function initSuffListDB() {
     }
 
     dbOpenReq.onupgradeneeded = function (event) {
-        console.log("Upgrading DB 'PubSuffList' version");
         var db = dbOpenReq.result;
         db.createObjectStore("pubsufflist");
         db.createObjectStore("listversion");
@@ -74,7 +107,6 @@ function initSuffListDB() {
     }
 
     dbOpenReq.onsuccess = function (event) {
-        console.log("IndexedDB PubSuffList successfully open");
         suffListDB = dbOpenReq.result;
 
         // Init DB in first start
@@ -88,7 +120,9 @@ function initSuffListDB() {
     }
 }
 
-
+/*
+Initialize GeneratorRules Database before first use
+*/
 function initGenRulesDB() {
     var dbOpenReq = window.indexedDB.open("GeneratorRules");
 
@@ -97,7 +131,6 @@ function initGenRulesDB() {
     }
 
     dbOpenReq.onupgradeneeded = function (event) {
-        console.log("Upgrading DB 'GeneratorRules' version");
         var db = dbOpenReq.result;
         var objStore = db.createObjectStore("rules");
         objStore.createIndex("domain", "domain");
@@ -110,30 +143,29 @@ function initGenRulesDB() {
     }
 
     dbOpenReq.onsuccess = function (event) {
-        console.log("IndexedDB 'GeneratorRules' successfully open");
         genRulesDB = dbOpenReq.result;
     }
 }
 
-function initPreferences(){
+/*
+Initialize Generator preferences to default values
+*/
+function initPreferences() {
     var p = browser.storage.local.get();
     p.then(
-        function(prefObj){
-            if (Object.keys(prefObj).length == 0){ //if retrieved object has no keys (if no preferences are stored), then set default preferences
+        function (prefObj) {
+            //if retrieved object has no keys (if no preferences are stored), then set default preferences
+            if (Object.keys(prefObj).length == 0) {
                 var p = browser.storage.local.set(preferences);
-                p.then(null, function(err){console.error(err);});
+                p.then(null, function (err) { console.error(err); });
             }
         },
-        function(err){
+        function (err) {
             console.error(err);
         }
     );
 }
 
-
-
-
-//TODO: Pridat moznost nacitania SuffListu aj zo suboru v pripade, ze nebude fungovat list zo servera
 
 initSuffListDB();
 initGenRulesDB();

@@ -7,34 +7,29 @@
     "default_locale": "en",
     "homepage_url": "https://github.com/DanKub/PasswordGen",
     "icons": {
-        "64": "icons/active-64.png"
+        "64": "icons/passwordgen-64.png"
     },
-
     "applications": {
         "gecko": {
-            "id": "{53d88a5a-eba8-41c1-8b2e-99426d24f547}"
+            "id": "passwordgen@passwordgen.local"
         }
     },
-
     "browser_action": {
         "browser_style": true,
-        "default_icon": "icons/active-64.png",
+        "default_icon": "icons/passwordgen-64.png",
         "default_title": "PasswordGen",
         "default_popup": "popup/popup.html"
     },
-
     "options_ui": {
-        "page": "options/options.html"    
+        "page": "options/options.html"
     },
-
-    "permissions":[
+    "permissions": [
         "storage",
         "tabs",
         "downloads",
         "clipboardWrite",
         "https://publicsuffix.org/list/public_suffix_list.dat"
-    ], 
-
+    ],
     "background": {
         "scripts": [
             "background/background.js"

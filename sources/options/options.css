@@ -1,7 +1,6 @@
 label{
     display: inline-block;
     clear: left;
-    /* width: 200px; */
     text-align: right;
     padding: 1em;
 }
@@ -44,6 +43,7 @@ p{
     border-collapse: collapse;
     width: 99%;
 }
+
 #table_stored_rules th {
     border-width: 1px;
     padding: 11px;
@@ -52,13 +52,11 @@ p{
     background-color: #4b9dfa;
     color: #ffffff;
 }
+
 #table_stored_rules tr:hover td {
-    /* cursor: pointer; */
     background-color: #4ba2fa23
 }
-/* table.table-stored-settings tr:nth-child(even) td{
-    background-color: rgb(78, 162, 231);
-} */
+
 #table_stored_rules td {
     border-width: 1px;
     padding: 5px;
@@ -83,8 +81,3 @@ i.material-icons {
     cursor: pointer;
     text-align: center; 
 }
-
-/* #table_stored_rules input[type="number"] {
-    -moz-appearance: textfield;
-    text-align: center;
-} */

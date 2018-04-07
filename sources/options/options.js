@@ -1,3 +1,25 @@
+/*******************************************************************************
+Copyright © 2018 Daniel Kubica
+
+This file is part of PasswordGen.
+
+   PasswordGen is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   PasswordGen is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with PasswordGen.  If not, see <http://www.gnu.org/licenses/>.
+********************************************************************************
+                 GitHub: https://github.com/DanKub/PasswordGen
+*******************************************************************************/
+
+
 var in_pwd_length = document.getElementById("in_pwd_length");
 var in_constant = document.getElementById("in_constant");
 var rb_base64 = document.getElementById("rb_base64");
@@ -18,6 +40,7 @@ var maxPwdLen = 86;
 var minTime = 0;
 var maxTime = 60;
 var maxConstantLen = 100;
+var maxFileSize = 10; // Max size of imported file in MB
 
 
 /*
@@ -64,84 +87,96 @@ function onError(err) {
     console.error(err);
 }
 
-function loadTableRules(){
-    // Show Generator rules from GenRules DB
+/*
+Show Generator rules from GenRules DB in UI
+*/
+function loadTableRules() {
     var transaction = genRulesDB.transaction(["rules"], "readonly");
     var objStore = transaction.objectStore("rules");
     var index = objStore.index("pdl");
     var reqCursor = index.openCursor();
 
     deleteTableRules();
-    reqCursor.onsuccess = function() {
+    reqCursor.onsuccess = function () {
         var cursor = reqCursor.result;
-        if(cursor){
-            // Ak ma zaznam deti -> je rodic
-            if(cursor.value.childs){
-                // Do tabulky vloz najprv rodica
-                insertNewTableEntry(cursor.value.domain, Number(cursor.value.pwdLength), cursor.value.b64Enc == "true" , cursor.value.hexEnc == "true", cursor.value.pdl, cursor.value.parent != null);
-                
+        if (cursor) {
+            // If rule contains children -> Parent rule
+            if (cursor.value.childs) {
+                // First insert parent rule into the table
+                insertNewTableEntry(cursor.value.domain, Number(cursor.value.pwdLength), cursor.value.b64Enc == "true", cursor.value.hexEnc == "true", cursor.value.pdl, cursor.value.parent != null);
+
                 var reqPdl = index.getAll(cursor.value.pdl);
-                reqPdl.onsuccess = function(){
-                    // Do tabulky vloz postupne vsetky deti, ktore ma rodic
-                    for(var i = 0; i < cursor.value.childs.length; i++){
-                        for(var j = 0; j < reqPdl.result.length; j++){
-                            if (cursor.value.childs[i] == reqPdl.result[j].domain){
-                                insertNewTableEntry(reqPdl.result[j].domain, Number(reqPdl.result[j].pwdLength), reqPdl.result[j].b64Enc == "true" , reqPdl.result[j].hexEnc == "true", reqPdl.result[j].pdl, reqPdl.result[j].parent != null);
+                reqPdl.onsuccess = function () {
+                    // Put all parent children into the table
+                    for (var i = 0; i < cursor.value.childs.length; i++) {
+                        for (var j = 0; j < reqPdl.result.length; j++) {
+                            if (cursor.value.childs[i] == reqPdl.result[j].domain) {
+                                insertNewTableEntry(reqPdl.result[j].domain, Number(reqPdl.result[j].pwdLength), reqPdl.result[j].b64Enc == "true", reqPdl.result[j].hexEnc == "true", reqPdl.result[j].pdl, reqPdl.result[j].parent != null);
                             }
                         }
                     }
                 }
             }
-            // Ak zaznam nema rodica
-            else if(cursor.value.parent == null) {
-                insertNewTableEntry(cursor.value.domain, Number(cursor.value.pwdLength), cursor.value.b64Enc == "true" , cursor.value.hexEnc == "true", cursor.value.pdl, cursor.value.parent != null);
+
+            // If the rule doesn't have a parent rule
+            else if (cursor.value.parent == null) {
+                insertNewTableEntry(cursor.value.domain, Number(cursor.value.pwdLength), cursor.value.b64Enc == "true", cursor.value.hexEnc == "true", cursor.value.pdl, cursor.value.parent != null);
             }
             cursor.continue();
         }
-        else {
-            console.log('Entries all displayed.');    
-        }
     }
 }
- //TODO: UPDATE TABLE RULES BY DOMAN NAME
-function deleteTableRules(){
-    for (var i = table.rows.length - 1; i > 0; i--){
+
+/*
+Delete all rules from UI table
+*/
+function deleteTableRules() {
+    for (var i = table.rows.length - 1; i > 0; i--) {
         table.deleteRow(i);
     }
 }
 
-function validatePwdLen(pwdLen){
+/*
+Password length validation
+*/
+function validatePwdLen(pwdLen) {
     pwdLen = pwdLen.replace(/\D+/g, "");
-    if(pwdLen < 1){
+    if (pwdLen < 1) {
         pwdLen = minPwdLen;
     }
-    else if(pwdLen > maxPwdLen){
+    else if (pwdLen > maxPwdLen) {
         pwdLen = maxPwdLen;
     }
     return pwdLen;
 }
 
-function validatePdl(pdl){
-    // Odstranim vsetky nevalidne znaky
+/*
+Parent Domain Level validation
+*/
+function validatePdl(pdl) {
+    // Remove all invalid characters
     pdl = pdl.replace(/[^A-Za-z0-9.-]/g, "");
-    // Zo zaciatku odstranim bodky a pomlcky
+    // Remove all dots and dashes from the beginning
     pdl = pdl.replace(/^(\.+)|^(-+)/g, "");
-    // Viacero pomlciek za sebou nahradim iba jednou
+    // Reduce 2 or more dashes in a row only to 1 dash
     pdl = pdl.replace(/-{2,}/g, "-");
-    // Za pomlckou nesmie nasledovat bodka
-    pdl = pdl.replace(/\-./g,".");
-    // Viacero bodiek za sebou nahradim iba jednou
+    // After dash can't be dot
+    pdl = pdl.replace(/\-./g, ".");
+    // Reduce 2 or more dots in a row only to 1 dot
     pdl = pdl.replace(/\.{2,}/g, ".");
-    // Z konca odstranim bodky a pomlcky
+    // Remove all dots and dashes from the end
     pdl = pdl.replace(/(\.|-)+$/g, "");
 
     return pdl;
 }
 
-function updateUIChildRules(ruleChilds, parentNode){
-    for (var i = 0; i < ruleChilds.length; i++){
-        for (var j = 1; j < table.rows.length; j++){
-            if (table.rows[j].children[0].firstChild.data == ruleChilds[i]){
+/*
+Update children rules in UI table after some parent preference was changed
+*/
+function updateUIChildRules(ruleChilds, parentNode) {
+    for (var i = 0; i < ruleChilds.length; i++) {
+        for (var j = 1; j < table.rows.length; j++) {
+            if (table.rows[j].children[0].firstChild.data == ruleChilds[i]) {
                 table.rows[j].children[1].firstChild.value = parentNode.cells[1].firstChild.value;
                 table.rows[j].children[2].firstChild.checked = parentNode.cells[2].firstChild.checked;
                 table.rows[j].children[3].firstChild.checked = parentNode.cells[3].firstChild.checked;
@@ -151,10 +186,13 @@ function updateUIChildRules(ruleChilds, parentNode){
     }
 }
 
-
-function updateStoredRule(event){
+/*
+Update stored generator rule in DB after user change some preference through UI table
+*/
+function updateStoredRule(event) {
     var node = event.target;
-    while(node.nodeName != "TR"){   //preiterujem sa na riadok v tabulke, v ktorom nastala nejaka zmena
+    // Go to table row element which was modified
+    while (node.nodeName != "TR") {
         node = node.parentElement;
     }
 
@@ -166,95 +204,115 @@ function updateStoredRule(event){
     var indexDomain = rulesObjStore.index("domain");
 
     var reqDomain = indexDomain.get(node.cells[0].firstChild.data);
-    reqDomain.onsuccess = function(){
+    reqDomain.onsuccess = function () {
         var storedRule = reqDomain.result;
 
         //Ak zaznam ktory idem menit nema deti
-        if (storedRule.childs == null){
+        // If rule which should be changed contains children
+        if (storedRule.childs == null) {
             //Ak nema deti a ma rodica, tak zmenim iba dany (detsky) zaznam a oddelim ho od hlavneho stromu ako novy strom
-            if(storedRule.parent){
-                rulesObjStore.put({ domain: node.cells[0].firstChild.data, 
-                                    pwdLength: node.cells[1].firstChild.value,
-                                    b64Enc: String(node.cells[2].firstChild.checked),
-                                    hexEnc: String(node.cells[3].firstChild.checked),
-                                    pdl: node.cells[0].firstChild.data, // zmena pdl na domain name -> takto vznikne novy strom
-                                    }, node.cells[0].firstChild.data);
+            // If rule doesn't have children and have some parent -> Change only this (children) rule and detach it from parent rule
+            if (storedRule.parent) {
+                rulesObjStore.put({
+                    domain: node.cells[0].firstChild.data,
+                    pwdLength: node.cells[1].firstChild.value,
+                    b64Enc: String(node.cells[2].firstChild.checked),
+                    hexEnc: String(node.cells[3].firstChild.checked),
+                    pdl: node.cells[0].firstChild.data, // Change from PDL to Domain name
+                }, node.cells[0].firstChild.data);
 
                 // Zmena UI tabulky - zmeneny zaznam vymazem od rodica a hodim ho pod tabulku
+                // UI table change - remove modified rule from parent and put it below table
                 insertNewTableEntry(node.cells[0].firstChild.data, Number(node.cells[1].firstChild.value), node.cells[2].firstChild.checked, node.cells[3].firstChild.checked, node.cells[0].firstChild.data, false);
                 node.remove();
 
                 // Odstranenie zaznamu od rodica (nakolko zo zmeneneho zaznamu je teraz samostatny strom)
                 // vyziadam si jeho rodica a odstranim ho odtial
+                // Remove modified rule from parent (modified rule will be separated)
                 var reqParentDomain = indexDomain.get(storedRule.parent);
-                reqParentDomain.onsuccess = function(){
+                reqParentDomain.onsuccess = function () {
                     var storedParentRule = reqParentDomain.result;
                     var parentChilds = storedParentRule.childs;
                     parentChilds.splice(parentChilds.indexOf(storedRule.domain), 1);
-    
+
                     // Ak rodic po vymazani childa obsahuje este ine deti
-                    if(storedParentRule.childs.length > 0){
-                        rulesObjStore.put({ domain: storedParentRule.domain, 
-                                            pwdLength: storedParentRule.pwdLength,
-                                            b64Enc: storedParentRule.b64Enc,
-                                            hexEnc: storedParentRule.hexEnc,
-                                            pdl: storedParentRule.pdl,
-                                            childs: storedParentRule.childs,
-                                            }, storedParentRule.domain);
+                    // If parent of deleted rule contains some other children
+                    if (storedParentRule.childs.length > 0) {
+                        rulesObjStore.put({
+                            domain: storedParentRule.domain,
+                            pwdLength: storedParentRule.pwdLength,
+                            b64Enc: storedParentRule.b64Enc,
+                            hexEnc: storedParentRule.hexEnc,
+                            pdl: storedParentRule.pdl,
+                            childs: storedParentRule.childs,
+                        }, storedParentRule.domain);
                     }
                     // Ak to bol posledny detsky zaznam, tak vymaz property 'childs'
-                    else{
-                        rulesObjStore.put({ domain: storedParentRule.domain, 
-                                            pwdLength: storedParentRule.pwdLength,
-                                            b64Enc: storedParentRule.b64Enc,
-                                            hexEnc: storedParentRule.hexEnc,
-                                            pdl: storedParentRule.pdl,
-                                            }, storedParentRule.domain);
+                    // If deleted rule was last children rule, remove 'childs' attribute from parent rule
+                    else {
+                        rulesObjStore.put({
+                            domain: storedParentRule.domain,
+                            pwdLength: storedParentRule.pwdLength,
+                            b64Enc: storedParentRule.b64Enc,
+                            hexEnc: storedParentRule.hexEnc,
+                            pdl: storedParentRule.pdl,
+                        }, storedParentRule.domain);
                     }
                 }
             }
 
             //Ak zaznam, ktory idem menit nema deti ani rodica
-            else{
-                rulesObjStore.put({ domain: node.cells[0].firstChild.data, 
-                                    pwdLength: node.cells[1].firstChild.value,
-                                    b64Enc: String(node.cells[2].firstChild.checked),
-                                    hexEnc: String(node.cells[3].firstChild.checked),
-                                    pdl: node.cells[4].firstChild.value,
-                                    }, node.cells[0].firstChild.data);
+            // If rule, which will be modified, it does not have children neither parent
+            else {
+                rulesObjStore.put({
+                    domain: node.cells[0].firstChild.data,
+                    pwdLength: node.cells[1].firstChild.value,
+                    b64Enc: String(node.cells[2].firstChild.checked),
+                    hexEnc: String(node.cells[3].firstChild.checked),
+                    pdl: node.cells[4].firstChild.value,
+                }, node.cells[0].firstChild.data);
             }
         }
 
         // Zaznam ktory idem menit MA DETI. Treba ich vsetky zmenit podla rodica (aktualneho zaznamu).
+        // Rule which will be modified has children. All children should be changed according to parent rule (current rule)
         else {
             // Zmena aktualneho (rodicovskeho) zaznamu, ktory user zmenil cez GUI
-            rulesObjStore.put({ domain: node.cells[0].firstChild.data, 
-                                pwdLength: node.cells[1].firstChild.value,
-                                b64Enc: String(node.cells[2].firstChild.checked),
-                                hexEnc: String(node.cells[3].firstChild.checked),
-                                pdl: node.cells[4].firstChild.value,
-                                childs: storedRule.childs,
-                                }, node.cells[0].firstChild.data);
+            // Current (parent) rule modification which was modified by user through GUI
+            rulesObjStore.put({
+                domain: node.cells[0].firstChild.data,
+                pwdLength: node.cells[1].firstChild.value,
+                b64Enc: String(node.cells[2].firstChild.checked),
+                hexEnc: String(node.cells[3].firstChild.checked),
+                pdl: node.cells[4].firstChild.value,
+                childs: storedRule.childs,
+            }, node.cells[0].firstChild.data);
 
-            updateUIChildRules(storedRule.childs, node); // zmena detskych zaznamov v tabulke GUI
+            updateUIChildRules(storedRule.childs, node); // Modification of children rules/rows in GUI table
 
             // Zmena detskych zaznamov v DB
-            for (var i = 0; i < storedRule.childs.length; i++){
-                rulesObjStore.put({ domain: storedRule.childs[i], 
-                                    pwdLength: node.cells[1].firstChild.value,
-                                    b64Enc: String(node.cells[2].firstChild.checked),
-                                    hexEnc: String(node.cells[3].firstChild.checked),
-                                    pdl: node.cells[4].firstChild.value,
-                                    parent: storedRule.domain,
-                                    }, storedRule.childs[i]);
+            // Modification of children rules in DB
+            for (var i = 0; i < storedRule.childs.length; i++) {
+                rulesObjStore.put({
+                    domain: storedRule.childs[i],
+                    pwdLength: node.cells[1].firstChild.value,
+                    b64Enc: String(node.cells[2].firstChild.checked),
+                    hexEnc: String(node.cells[3].firstChild.checked),
+                    pdl: node.cells[4].firstChild.value,
+                    parent: storedRule.domain,
+                }, storedRule.childs[i]);
             }
         }
     }
 }
 
-function deleteStoredRule(event){
+/*
+Remove specific stored generator rule from DB
+*/
+function deleteStoredRule(event) {
     var node = event.target;
-    while(node.nodeName != "TR"){   //preiterujem sa na riadok v tabulke, v ktorom nastala nejaka zmena
+    // Go to table row element which was modified
+    while (node.nodeName != "TR") {
         node = node.parentElement;
     }
 
@@ -263,76 +321,90 @@ function deleteStoredRule(event){
     var indexDomain = rulesObjStore.index("domain");
 
     var reqDomain = indexDomain.get(node.cells[0].firstChild.data);
-    reqDomain.onsuccess = function(){
+    reqDomain.onsuccess = function () {
         // Ak zaznam, ktory chcem vymazat je rodic
-        if(reqDomain.result.childs){
-            for(var i = 0; i < reqDomain.result.childs.length; i++){
-                rulesObjStore.delete(reqDomain.result.childs[i]); // Vymazanie detskych zaznamov v DB
+        // If rule which should be removed is parent
+        if (reqDomain.result.childs) {
+            for (var i = 0; i < reqDomain.result.childs.length; i++) {
+                rulesObjStore.delete(reqDomain.result.childs[i]); // Delete children rules from DB
 
-                for (var j = 1; j < table.rows.length; j++){
-                    if (table.rows[j].children[0].firstChild.data == reqDomain.result.childs[i]){
-                        table.rows[j].remove(); // Vymazanie detskych zaznamov v tabulke GUI
+                for (var j = 1; j < table.rows.length; j++) {
+                    if (table.rows[j].children[0].firstChild.data == reqDomain.result.childs[i]) {
+                        table.rows[j].remove(); // Delete children rules/rows from GUI table
                     }
                 }
             }
-            rulesObjStore.delete(reqDomain.result.domain); // Vymazanie rodica v DB
-            node.remove(); // Vymazanie rodica z tabulky GUI
+            rulesObjStore.delete(reqDomain.result.domain); // Delete parent rule from DB
+            node.remove(); // Delete parent rule from GUI table
         }
 
         // Ak zaznam ktory chcem vymazat je dieta
-        else if(reqDomain.result.parent){
+        // If rule wich should be removed is child
+        else if (reqDomain.result.parent) {
             // Detsky zaznam bude vymazany a v jeho rodicovi ho teda musim odstranit zo zoznamu deti
+            // Children rule will be removed -> it should be also removed from parent rule
             var reqParentDomain = indexDomain.get(reqDomain.result.parent);
-            reqParentDomain.onsuccess = function(){
+            reqParentDomain.onsuccess = function () {
                 var storedParentRule = reqParentDomain.result;
                 var parentChilds = storedParentRule.childs;
                 parentChilds.splice(parentChilds.indexOf(reqDomain.result.domain), 1);
 
                 // Ak rodic po vymazani childa obsahuje este ine deti
-                if(storedParentRule.childs.length > 0){
-                    rulesObjStore.put({ domain: storedParentRule.domain, 
-                                        pwdLength: storedParentRule.pwdLength,
-                                        b64Enc: storedParentRule.b64Enc,
-                                        hexEnc: storedParentRule.hexEnc,
-                                        pdl: storedParentRule.pdl,
-                                        childs: storedParentRule.childs,
-                                        }, storedParentRule.domain);
+                // If parent of deleted rule contains some other children
+                if (storedParentRule.childs.length > 0) {
+                    rulesObjStore.put({
+                        domain: storedParentRule.domain,
+                        pwdLength: storedParentRule.pwdLength,
+                        b64Enc: storedParentRule.b64Enc,
+                        hexEnc: storedParentRule.hexEnc,
+                        pdl: storedParentRule.pdl,
+                        childs: storedParentRule.childs,
+                    }, storedParentRule.domain);
                 }
                 // Ak to bol posledny detsky zaznam, tak vymaz property 'childs'
-                else{
-                    rulesObjStore.put({ domain: storedParentRule.domain, 
-                                        pwdLength: storedParentRule.pwdLength,
-                                        b64Enc: storedParentRule.b64Enc,
-                                        hexEnc: storedParentRule.hexEnc,
-                                        pdl: storedParentRule.pdl,
-                                        }, storedParentRule.domain);
+                // If deleted rule was last child rule, remove 'childs' attribute from parent rule
+                else {
+                    rulesObjStore.put({
+                        domain: storedParentRule.domain,
+                        pwdLength: storedParentRule.pwdLength,
+                        b64Enc: storedParentRule.b64Enc,
+                        hexEnc: storedParentRule.hexEnc,
+                        pdl: storedParentRule.pdl,
+                    }, storedParentRule.domain);
                 }
-                rulesObjStore.delete(reqDomain.result.domain); // Vymazanie zaznamu v DB
+                rulesObjStore.delete(reqDomain.result.domain); // Delete rule from DB
             }
-            node.remove(); // Vymazanie zaznamu v tabulke GUI
+            node.remove(); // Delete rule/row node from GUI table
         }
 
         // Zaznam nema rodica ani dieta
-        else{
+        // Rule doesn't have parent neither child
+        else {
             rulesObjStore.delete(reqDomain.result.domain);
             node.remove();
         }
     }
 }
 
-function deleteAllStoredRules(){
-    if(confirm(browser.i18n.getMessage("options_confirm_del_all_rules"))){
+/*
+Delete all rules/rows from GeneratorRules DB
+*/
+function deleteAllStoredRules() {
+    if (confirm(browser.i18n.getMessage("options_confirm_del_all_rules"))) {
         deleteTableRules();
         var transaction = genRulesDB.transaction(["rules"], "readwrite");
         var rulesObjStore = transaction.objectStore("rules");
         rulesObjStore.clear();
     }
-    else{
+    else {
         console.log("Rules deleting was canceled by user");
     }
 }
 
-function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isChild){
+/*
+Insert new row/generator rule from DB into UI table
+*/
+function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isChild) {
     var row = table.insertRow();
     var domainCell = row.insertCell();
     var pwdLengthCell = row.insertCell();
@@ -341,15 +413,12 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isCh
     var pdlCell = row.insertCell();
     var delIconCell = row.insertCell();
 
-    // pwdLengthCell.contentEditable = "true";
-    // pdlCell.contentEditable = "true";
-
     var radioBase64Input = document.createElement("input");
     radioBase64Input.setAttribute("type", "radio");
     radioBase64Input.setAttribute("name", "encoding_row" + row.rowIndex);
     var radioHexInput = radioBase64Input.cloneNode(true);
 
-    if (isChild){
+    if (isChild) {
         domainCell.setAttribute("class", "children");
     }
 
@@ -379,7 +448,10 @@ function insertNewTableEntry(domain, pwdLength, base64Check, hexCheck, pdl, isCh
     delIconCell.appendChild(delIcon);
 }
 
-function openGenRulesDB(){
+/*
+Open GeneratorRules DB
+*/
+function openGenRulesDB() {
     var dbOpenReq = window.indexedDB.open("GeneratorRules");
 
     dbOpenReq.onerror = function () {
@@ -387,30 +459,32 @@ function openGenRulesDB(){
     }
 
     dbOpenReq.onsuccess = function () {
-        console.log("IndexedDB 'GeneratorRules' successfully open");
         genRulesDB = dbOpenReq.result;
     }
 }
 
-function exportSettings(){
-    var retrievePrefs = browser.storage.local.get(); // Ziskaj lokalne ulozene nastavenia generatora
+/*
+Write all preferences and stored rules from DB  to JSON file and download it to user device.
+*/
+function exportSettings() {
+    var retrievePrefs = browser.storage.local.get(); // Get preferences from local storage
     retrievePrefs.then(
-        function(preferences){
+        function (preferences) {
             var exportObject = {};
-            exportObject.preferences = preferences; // Do objektu, kt. sa bude exportovat vloz ziskane nastavenia
+            exportObject.preferences = preferences; // Insert retrieved preferences into exportable object
 
             var transaction = genRulesDB.transaction(["rules"], "readonly");
             var objStore = transaction.objectStore("rules");
             var index = objStore.index("domain");
             var reqAllRules = index.getAll();
 
-            reqAllRules.onsuccess = function(){
-                exportObject.rules = reqAllRules.result;    // Do objektu, kt. sa bude exportovat vloz vsetky ziskane pravidla z DB
-                var blob = new Blob([JSON.stringify(exportObject, null, 4)], {type : 'application/json'});
+            reqAllRules.onsuccess = function () {
+                exportObject.rules = reqAllRules.result;    //  Insert retrieved rules from DB into exportable object
+                var blob = new Blob([JSON.stringify(exportObject, null, 4)], { type: 'application/json' });
                 var url = URL.createObjectURL(blob);
                 browser.runtime.getPlatformInfo().then(info => {
                     var downloading;
-                    if (info.os == "android"){
+                    if (info.os == "android") {
                         downloading = browser.downloads.download(
                             {
                                 url: url,
@@ -418,7 +492,7 @@ function exportSettings(){
                             }
                         );
                     }
-                    else{
+                    else {
                         downloading = browser.downloads.download(
                             {
                                 url: url,
@@ -434,41 +508,42 @@ function exportSettings(){
         }, onError);
 }
 
-function importSettings(){
+/*
+Load all preferences & generator rules from JSON file to the database and local storage.
+*/
+function importSettings() {
     var file = in_import.files[0];
-    var maxFileSize = 10; // Max file size in MB
-
-    if (file == null){
+    if (file == null) {
         return;
     }
 
-    if(file.type != "application/json"){
+    if (file.type != "application/json") {
         alert(browser.i18n.getMessage("options_alert_not_json_file"));
         return;
     }
 
-    if(file.size > (maxFileSize*1024*1024)){
+    if (file.size > (maxFileSize * 1024 * 1024)) {
         alert(browser.i18n.getMessage("options_alert_file_large"));
         return;
     }
 
     var reader = new FileReader();
     reader.readAsText(file);
-    reader.onload = function(event){
+    reader.onload = function (event) {
 
-        if(isValidJson(event.target.result)){
+        if (isValidJson(event.target.result)) {
             var importObj = JSON.parse(event.target.result);
 
-            browser.storage.local.set(importObj.preferences); // nacitanie nastaveni z importovaneho objektu
+            browser.storage.local.set(importObj.preferences); // Load and set preferences from imported file
 
             var transaction = genRulesDB.transaction(["rules"], "readwrite");
             var objStore = transaction.objectStore("rules");
             var clearReq = objStore.clear();
-            clearReq.onsuccess = function(){
+            clearReq.onsuccess = function () {
 
-                // Nacitanie vsetkych pravidiel do DB z importovaneho objektu
-                for(var i = 0; i < importObj.rules.length; i++){
-                    objStore.put(importObj.rules[i], importObj.rules[i].domain).onerror = function(err){
+                // Load all generator rules from imported file into DB
+                for (var i = 0; i < importObj.rules.length; i++) {
+                    objStore.put(importObj.rules[i], importObj.rules[i].domain).onerror = function (err) {
                         console.error(err)
                     }
                 }
@@ -476,13 +551,16 @@ function importSettings(){
                 in_import.value = null;
             }
         }
-        else{
+        else {
             return;
         }
     }
 }
 
-function isValidJson(data){
+/*
+Verify whether JSON file is valid before data will be written into database.
+*/
+function isValidJson(data) {
     try {
         var obj = JSON.parse(data);
 
@@ -493,51 +571,51 @@ function isValidJson(data){
             obj.preferences.hex == undefined ||
             obj.preferences.time == undefined ||
             obj.preferences.store == undefined ||
-            obj.preferences.use_stored == undefined){
+            obj.preferences.use_stored == undefined) {
             alert(browser.i18n.getMessage("options_alert_invalid_preference_name"));
             return false;
         }
-        if (typeof(obj.preferences.length) != "string" ||
-            typeof(obj.preferences.constant) != "string" ||
-            typeof(obj.preferences.base64) != "boolean" ||
-            typeof(obj.preferences.hex) != "boolean" ||
-            typeof(obj.preferences.time) != "string" ||
-            typeof(obj.preferences.store) != "boolean" ||
-            typeof(obj.preferences.use_stored) != "boolean"){
+        if (typeof (obj.preferences.length) != "string" ||
+            typeof (obj.preferences.constant) != "string" ||
+            typeof (obj.preferences.base64) != "boolean" ||
+            typeof (obj.preferences.hex) != "boolean" ||
+            typeof (obj.preferences.time) != "string" ||
+            typeof (obj.preferences.store) != "boolean" ||
+            typeof (obj.preferences.use_stored) != "boolean") {
             alert(browser.i18n.getMessage("options_alert_invalid_preference_type"));
             return false;
-            }
-        if(!obj.preferences.length.match(/^[0-9]+$/)){
+        }
+        if (!obj.preferences.length.match(/^[0-9]+$/)) {
             alert(browser.i18n.getMessage("options_alert_invalid_pwd_len") + obj.preferences.length);
             return false;
         }
-        if(parseInt(obj.preferences.length, 10) < minPwdLen || parseInt(obj.preferences.length, 10) > maxPwdLen){
+        if (parseInt(obj.preferences.length, 10) < minPwdLen || parseInt(obj.preferences.length, 10) > maxPwdLen) {
             alert(browser.i18n.getMessage("options_alert_invalid_pwd_len") + obj.preferences.length);
             return false;
         }
-        if(!obj.preferences.time.match(/^[0-9]+$/)){
+        if (!obj.preferences.time.match(/^[0-9]+$/)) {
             alert(browser.i18n.getMessage("options_alert_invalid_time") + obj.preferences.time);
             return false;
         }
-        if(parseInt(obj.preferences.time, 10) < minTime || parseInt(obj.preferences.time, 10) > maxTime){
+        if (parseInt(obj.preferences.time, 10) < minTime || parseInt(obj.preferences.time, 10) > maxTime) {
             alert(browser.i18n.getMessage("options_alert_invalid_time") + obj.preferences.time);
             return false;
         }
-        if(obj.preferences.constant.length > maxConstantLen){
+        if (obj.preferences.constant.length > maxConstantLen) {
             alert(browser.i18n.getMessage("options_alert_invalid_const_len"));
             return false;
         }
 
         // Check Stored Rules Validity
-        for (var i = 0; i < obj.rules.length; i++){
+        for (var i = 0; i < obj.rules.length; i++) {
             if (obj.rules[i].domain == undefined ||
                 obj.rules[i].pwdLength == undefined ||
                 obj.rules[i].b64Enc == undefined ||
                 obj.rules[i].hexEnc == undefined ||
-                obj.rules[i].pdl == undefined){
+                obj.rules[i].pdl == undefined) {
                 alert(browser.i18n.getMessage("options_alert_invalid_json"));
                 return false;
-                }
+            }
             if (obj.rules[i].domain == null ||
                 obj.rules[i].pwdLength == null ||
                 obj.rules[i].b64Enc == null ||
@@ -570,7 +648,10 @@ function isValidJson(data){
     return true;
 }
 
-function UILocalization(){
+/*
+Translate UI to corresponding locale (EN or SK)
+*/
+function UILocalisation() {
     document.getElementById("p_gen_prefs").textContent = browser.i18n.getMessage("options_p_gen_prefs");
     document.getElementById("lbl_pwd_length").textContent = browser.i18n.getMessage("options_lbl_pwd_length");
     document.getElementById("lbl_const").textContent = browser.i18n.getMessage("options_lbl_const");
@@ -591,8 +672,9 @@ function UILocalization(){
     document.getElementById("th_del").textContent = browser.i18n.getMessage("options_th_del");
 }
 
+
 openGenRulesDB();
-UILocalization();
+UILocalisation();
 
 document.addEventListener("change", savePreferences);
 document.addEventListener("load", loadPreferences());
